@@ -30,7 +30,7 @@ export default function PayrollTaxReports() {
               <li>• State tax compliance</li>
               <li>• Social Security & Medicare</li>
               <li>• Unemployment taxes</li>
-              <li>• Workers' compensation</li>
+              <li>• Workers&apos; compensation</li>
             </ul>
           </div>
           

@@ -17,7 +17,7 @@ export default function ShiftsAttendance() {
           </p>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-blue-800">
-              <strong>Today's Attendance:</strong> 145 employees checked in, 3 late arrivals, 2 absent.
+              <strong>Today&apos;s Attendance:</strong> 145 employees checked in, 3 late arrivals, 2 absent.
             </p>
           </div>
         </div>

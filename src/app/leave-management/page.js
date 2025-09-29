@@ -77,7 +77,7 @@ export default function LeaveManagement() {
             </div>
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">Tom Brown's sick leave approved by manager</span>
+              <span className="text-sm text-gray-600">Tom Brown&apos;s sick leave approved by manager</span>
               <span className="text-xs text-gray-400 ml-auto">3 hours ago</span>
             </div>
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">

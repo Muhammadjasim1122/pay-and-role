@@ -77,12 +77,12 @@ export default function ExpenseManagement() {
             </div>
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">Sarah's $180 meal expense approved</span>
+              <span className="text-sm text-gray-600">Sarah&apos;s $180 meal expense approved</span>
               <span className="text-xs text-gray-400 ml-auto">4 hours ago</span>
             </div>
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">Mike's $320 training expense requires receipt</span>
+              <span className="text-sm text-gray-600">Mike&apos;s $320 training expense requires receipt</span>
               <span className="text-xs text-gray-400 ml-auto">1 day ago</span>
             </div>
           </div>

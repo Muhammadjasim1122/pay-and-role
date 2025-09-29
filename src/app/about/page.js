@@ -195,7 +195,7 @@ export default function About() {
             <div>
               <h4 className="text-xl font-semibold text-gray-900 mb-2">Powered by the low-code, no-code Frappe Framework</h4>
               <p className="text-gray-600">
-                Built on Frappe Framework's robust foundation, Frappe HR leverages low-code/no-code capabilities 
+                Built on Frappe Framework&apos;s robust foundation, Frappe HR leverages low-code/no-code capabilities 
                 to provide rapid deployment and easy maintenance without requiring extensive technical expertise.
               </p>
             </div>
@@ -240,7 +240,7 @@ export default function About() {
                 </svg>
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Employee Lifecycle</h3>
-              <p className="text-gray-600">From onboarding to exits, transfers to promotions, we've got your back every step of the way</p>
+              <p className="text-gray-600">From onboarding to exits, transfers to promotions, we&apos;ve got your back every step of the way</p>
             </div>
 
             {/* Shifts & Attendance Card */}
@@ -304,7 +304,7 @@ export default function About() {
               Our journey began with a commitment to building a 100% open-source portal that would offer seamless UX and a sophisticated UI. We leveraged the robust ERPNext platform and the flexible Frappe Framework to create something truly special.
             </p>
             <p className="text-gray-600 leading-relaxed">
-              Today, Frappe HR stands as a testament to what's possible when open-source principles meet exceptional design and user experience. We've created a comprehensive HR solution that empowers organizations to manage their most valuable asset - their people - with efficiency, transparency, and innovation.
+              Today, Frappe HR stands as a testament to what&apos;s possible when open-source principles meet exceptional design and user experience. We&apos;ve created a comprehensive HR solution that empowers organizations to manage their most valuable asset - their people - with efficiency, transparency, and innovation.
             </p>
           </div>
 
@@ -372,7 +372,7 @@ export default function About() {
                 </div>
                 {/* Quote Section */}
                 <p className="text-gray-600 leading-relaxed items-start">
-                  "{testimonial.quote}"
+                  &ldquo;{testimonial.quote}&rdquo;
                 </p>
               </div>
             ))}
@@ -487,11 +487,11 @@ export default function About() {
         {/* Inspirational Quote */}
         <div className="text-center py-8 px-8">
           <div className="relative">
-            <span className="text-4xl text-gray-300 font-serif absolute -left-2 -top-1">"</span>
+            <span className="text-4xl text-gray-300 font-serif absolute -left-2 -top-1">&ldquo;</span>
             <p className="text-sm text-gray-400 italic font-light leading-relaxed px-6">
               The only way to do great work is to love what you do. - Steve Jobs
             </p>
-            <span className="text-4xl text-gray-300 font-serif absolute -right-2 -bottom-1">"</span>
+            <span className="text-4xl text-gray-300 font-serif absolute -right-2 -bottom-1">&rdquo;</span>
           </div>
         </div>
         </div>

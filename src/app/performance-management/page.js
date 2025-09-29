@@ -76,12 +76,12 @@ export default function PerformanceManagement() {
             </div>
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">Maria Garcia received "Exceeds Expectations" rating</span>
+              <span className="text-sm text-gray-600">Maria Garcia received &ldquo;Exceeds Expectations&rdquo; rating</span>
               <span className="text-xs text-gray-400 ml-auto">3 hours ago</span>
             </div>
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">David Lee's improvement plan updated</span>
+              <span className="text-sm text-gray-600">David Lee&apos;s improvement plan updated</span>
               <span className="text-xs text-gray-400 ml-auto">1 day ago</span>
             </div>
           </div>
