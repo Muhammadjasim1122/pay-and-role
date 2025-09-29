@@ -4,64 +4,120 @@ import { useState } from 'react';
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 
-export default function Home() {
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+// Import all page components
+import About from './about/page';
+import Pricing from './pricing/page';
+import Documentation from './documentation/page';
+import Blog from './blog/page';
+import Contact from './contact/page';
+import Recruitment from './recruitment/page';
+import EmployeeLifecycle from './employee-lifecycle/page';
+import ShiftsAttendance from './shifts-attendance/page';
+import LeaveManagement from './leave-management/page';
+import ExpenseManagement from './expense-management/page';
+import PerformanceManagement from './performance-management/page';
+import Payroll from './payroll/page';
+import PayrollTaxReports from './payroll-tax-reports/page';
+import MobileApp from './mobile-app/page';
 
-  // Example breadcrumbs - you can modify this based on your navigation
-  const breadcrumbs = [
-    { label: "Frappe", onClick: () => console.log("Navigate to Frappe") },
-    { label: "Products", onClick: () => console.log("Navigate to Products") },
-    { label: "Frappe HR", onClick: () => console.log("Navigate to Frappe HR") }
-  ];
+export default function Home() {
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
+  const [activePage, setActivePage] = useState('About');
+
+  // Page mapping
+  const pageComponents = {
+    'About': About,
+    'Pricing': Pricing,
+    'Documentation': Documentation,
+    'Blog': Blog,
+    'Contact': Contact,
+    'Recruitment': Recruitment,
+    'Employee Lifecycle': EmployeeLifecycle,
+    'Shifts & Attendance': ShiftsAttendance,
+    'Leave Management': LeaveManagement,
+    'Expense Management': ExpenseManagement,
+    'Performance Management': PerformanceManagement,
+    'Payroll': Payroll,
+    'Payroll Tax & Reports': PayrollTaxReports,
+    'Mobile App': MobileApp,
+  };
+
+  // Dynamic breadcrumbs based on active page
+  const getBreadcrumbs = (pageName) => {
+    // Main navigation items that should NOT show "Frappe HR" in breadcrumbs
+    const mainNavItems = [
+      'About',
+      'Pricing', 
+      'Documentation',
+      'Blog',
+      'Contact'
+    ];
+
+    // Feature items that should show the full breadcrumb path with "Frappe HR"
+    const featureItems = [
+      'Recruitment',
+      'Employee Lifecycle', 
+      'Shifts & Attendance',
+      'Leave Management',
+      'Expense Management',
+      'Performance Management',
+      'Payroll',
+      'Payroll Tax & Reports',
+      'Mobile App'
+    ];
+
+    if (mainNavItems.includes(pageName)) {
+      // For main nav items: "Frappe > Products > [Page Name]"
+      return [
+        { label: "Frappe", onClick: () => console.log("Navigate to Frappe") },
+        { label: "Products", onClick: () => console.log("Navigate to Products") },
+        { label: pageName, onClick: () => console.log(`Navigate to ${pageName}`) }
+      ];
+    } else if (featureItems.includes(pageName)) {
+      // For feature items: "Frappe > Products > Frappe HR > [Page Name]"
+      return [
+        { label: "Frappe", onClick: () => console.log("Navigate to Frappe") },
+        { label: "Products", onClick: () => console.log("Navigate to Products") },
+        { label: "Frappe HR", onClick: () => console.log("Navigate to Frappe HR") },
+        { label: pageName, onClick: () => console.log(`Navigate to ${pageName}`) }
+      ];
+    } else {
+      // Default: "Frappe > Products > Frappe HR"
+      return [
+        { label: "Frappe", onClick: () => console.log("Navigate to Frappe") },
+        { label: "Products", onClick: () => console.log("Navigate to Products") },
+        { label: "Frappe HR", onClick: () => console.log("Navigate to Frappe HR") }
+      ];
+    }
+  };
+
+  const breadcrumbs = getBreadcrumbs(activePage);
 
   const handleSidebarToggle = (expanded) => {
     setIsSidebarExpanded(expanded);
   };
 
+  const handlePageChange = (pageName) => {
+    setActivePage(pageName);
+  };
+
+  const ActiveComponent = pageComponents[activePage] || About;
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
       <div className="transition-all duration-300 ease-out">
-        <Sidebar onToggle={handleSidebarToggle} />
+        <Sidebar onToggle={handleSidebarToggle} onPageChange={handlePageChange} />
       </div>
-      
+
       {/* Right Side - Header + Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col h-screen">
         {/* Header - Always stays in place */}
         <Header breadcrumbs={breadcrumbs} />
-        
-        {/* Main Content Area - Pushes when sidebar opens */}
-        <div className={`flex-1 transition-all duration-300 ease-out ${isSidebarExpanded ? 'ml-48' : 'ml-0'}`}>
-          <main className="p-8">
-            <div className="max-w-4xl mx-auto">
-              <h1 className="text-3xl font-bold text-gray-900 mb-6">
-                Welcome to Frappe HR
-              </h1>
-              
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                  HR Management Dashboard
-                </h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                    <h3 className="font-medium text-blue-900 mb-2">Employees</h3>
-                    <p className="text-blue-700 text-sm">Manage employee records and information</p>
-                  </div>
-                  
-                  <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                    <h3 className="font-medium text-green-900 mb-2">Payroll</h3>
-                    <p className="text-green-700 text-sm">Handle salary and payment processing</p>
-                  </div>
-                  
-                  <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                    <h3 className="font-medium text-purple-900 mb-2">Attendance</h3>
-                    <p className="text-purple-700 text-sm">Track employee attendance and leaves</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </main>
+
+        {/* Main Content Area - Independent scrolling */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+          <ActiveComponent />
         </div>
       </div>
     </div>
