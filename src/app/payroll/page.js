@@ -1,93 +1,10 @@
 'use client';
 
 import React from 'react';
+import Payroll from '@/components/payroll/Payroll';
 
-export default function Payroll() {
+export default function PayrollPage() {
   return (
-    <div className="p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Payroll Management</h1>
-        
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Automated Payroll Processing</h2>
-          <p className="text-gray-600 mb-4">
-            Streamline payroll processing with automated calculations, tax deductions, 
-            and direct deposit management. Ensure accurate and timely payments while 
-            maintaining compliance with labor laws and regulations.
-          </p>
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <p className="text-green-800">
-              <strong>Next Payroll:</strong> December 31st payroll processed for 150 employees totaling $125,000.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">Payroll Components</h3>
-            <ul className="space-y-2 text-gray-600">
-              <li>• Salary & hourly wages</li>
-              <li>• Overtime calculations</li>
-              <li>• Bonuses & commissions</li>
-              <li>• Deductions & benefits</li>
-              <li>• Tax calculations</li>
-            </ul>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">Payment Methods</h3>
-            <ul className="space-y-2 text-gray-600">
-              <li>• Direct deposit</li>
-              <li>• Paper checks</li>
-              <li>• Pay cards</li>
-              <li>• Mobile payments</li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Payroll Summary</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">$125K</div>
-              <div className="text-sm text-blue-700">Total Payroll</div>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">150</div>
-              <div className="text-sm text-green-700">Employees</div>
-            </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">$35K</div>
-              <div className="text-sm text-purple-700">Taxes</div>
-            </div>
-            <div className="text-center p-4 bg-orange-50 rounded-lg">
-              <div className="text-2xl font-bold text-orange-600">$90K</div>
-              <div className="text-sm text-orange-700">Net Pay</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Payroll Activity</h3>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">December payroll processed successfully</span>
-              <span className="text-xs text-gray-400 ml-auto">2 hours ago</span>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">Tax forms generated for 150 employees</span>
-              <span className="text-xs text-gray-400 ml-auto">4 hours ago</span>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">Direct deposit notifications sent</span>
-              <span className="text-xs text-gray-400 ml-auto">6 hours ago</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <Payroll />
   );
 }

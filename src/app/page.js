@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 
@@ -101,13 +101,104 @@ export default function Home() {
     setActivePage(pageName);
   };
 
+  // Set up global navigation function
+  useEffect(() => {
+    window.navigateToPage = (pageName) => {
+      console.log('Global navigation function called with:', pageName);
+      setActivePage(pageName);
+    };
+    
+    return () => {
+      delete window.navigateToPage;
+    };
+  }, []);
+
+          // Listen for navigation events from other components
+          useEffect(() => {
+            const handleNavigateToEmployeeLifecycle = () => {
+              console.log('Event received: navigateToEmployeeLifecycle');
+              setActivePage('Employee Lifecycle');
+            };
+
+            const handleNavigateToShiftsAttendance = () => {
+              console.log('Event received: navigateToShiftsAttendance');
+              setActivePage('Shifts & Attendance');
+            };
+
+            const handleNavigateToRecruitment = () => {
+              console.log('Event received: navigateToRecruitment');
+              setActivePage('Recruitment');
+            };
+
+            const handleNavigateToPricing = () => {
+              console.log('Event received: navigateToPricing');
+              setActivePage('Pricing');
+            };
+
+            const handleNavigateToLeaveManagement = () => {
+              console.log('Event received: navigateToLeaveManagement');
+              setActivePage('Leave Management');
+            };
+
+            const handleNavigateToExpenseManagement = () => {
+              console.log('Event received: navigateToExpenseManagement');
+              setActivePage('Expense Management');
+            };
+
+            const handleNavigateToPerformanceManagement = () => {
+              console.log('Event received: navigateToPerformanceManagement');
+              setActivePage('Performance Management');
+            };
+
+            const handleNavigateToPayroll = () => {
+              console.log('Event received: navigateToPayroll');
+              setActivePage('Payroll');
+            };
+
+            const handleNavigateToPayrollTaxReports = () => {
+              console.log('Event received: navigateToPayrollTaxReports');
+              setActivePage('Payroll Tax & Reports');
+            };
+
+            const handleNavigateToMobileApp = () => {
+              console.log('Event received: navigateToMobileApp');
+              setActivePage('Mobile App');
+            };
+
+            console.log('Setting up navigation event listeners');
+            window.addEventListener('navigateToEmployeeLifecycle', handleNavigateToEmployeeLifecycle);
+            window.addEventListener('navigateToShiftsAttendance', handleNavigateToShiftsAttendance);
+            window.addEventListener('navigateToRecruitment', handleNavigateToRecruitment);
+            window.addEventListener('navigateToPricing', handleNavigateToPricing);
+            window.addEventListener('navigateToLeaveManagement', handleNavigateToLeaveManagement);
+            window.addEventListener('navigateToExpenseManagement', handleNavigateToExpenseManagement);
+            window.addEventListener('navigateToPerformanceManagement', handleNavigateToPerformanceManagement);
+            window.addEventListener('navigateToPayroll', handleNavigateToPayroll);
+            window.addEventListener('navigateToPayrollTaxReports', handleNavigateToPayrollTaxReports);
+            window.addEventListener('navigateToMobileApp', handleNavigateToMobileApp);
+            
+            return () => {
+              console.log('Cleaning up navigation event listeners');
+              window.removeEventListener('navigateToEmployeeLifecycle', handleNavigateToEmployeeLifecycle);
+              window.removeEventListener('navigateToShiftsAttendance', handleNavigateToShiftsAttendance);
+              window.removeEventListener('navigateToRecruitment', handleNavigateToRecruitment);
+              window.removeEventListener('navigateToPricing', handleNavigateToPricing);
+              window.removeEventListener('navigateToLeaveManagement', handleNavigateToLeaveManagement);
+              window.removeEventListener('navigateToExpenseManagement', handleNavigateToExpenseManagement);
+              window.removeEventListener('navigateToPerformanceManagement', handleNavigateToPerformanceManagement);
+              window.removeEventListener('navigateToPayroll', handleNavigateToPayroll);
+              window.removeEventListener('navigateToPayrollTaxReports', handleNavigateToPayrollTaxReports);
+              window.removeEventListener('navigateToMobileApp', handleNavigateToMobileApp);
+            };
+          }, []);
+
   const ActiveComponent = pageComponents[activePage] || About;
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
       <div className="transition-all duration-300 ease-out">
-        <Sidebar onToggle={handleSidebarToggle} onPageChange={handlePageChange} />
+        <Sidebar onToggle={handleSidebarToggle} onPageChange={handlePageChange} activePage={activePage} />
       </div>
 
       {/* Right Side - Header + Content */}

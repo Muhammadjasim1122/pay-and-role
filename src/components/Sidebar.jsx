@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Logo from './Logo';
 import SidebarItem from './SidebarItem';
 import { 
@@ -20,9 +20,11 @@ import {
   Smartphone 
 } from 'lucide-react';
 
-const Sidebar = ({ onToggle, onPageChange }) => {
+const Sidebar = ({ onToggle, onPageChange, activePage }) => {
   const [isExpanded, setIsExpanded] = useState(true);
-  const [activeItem, setActiveItem] = useState('About');
+
+  // Use activePage prop instead of local state
+  const activeItem = activePage || 'About';
 
   const handleMouseEnter = () => {
     setIsExpanded(true);
@@ -35,7 +37,22 @@ const Sidebar = ({ onToggle, onPageChange }) => {
   };
 
   const handleItemClick = (itemText) => {
-    setActiveItem(itemText);
+    // Handle external links
+    if (itemText === "Documentation") {
+      window.open("https://docs.frappe.io/hr/introduction", "_blank");
+      return;
+    }
+    
+    if (itemText === "Blog") {
+      window.open("https://frappe.io/blog?category=frappe-hr", "_blank");
+      return;
+    }
+    
+    if (itemText === "Contact") {
+      window.open("https://frappe.io/contact-us?product=Frappe%20HR", "_blank");
+      return;
+    }
+    
     onPageChange?.(itemText);
     console.log(`Clicked ${itemText}`);
   };
