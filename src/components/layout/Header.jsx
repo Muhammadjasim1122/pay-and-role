@@ -91,7 +91,7 @@ export default function Header() {
           </div>
         </div>
       </div>
-       <div className="sticky top-0 z-40 flex items-center gap-3 px-4 py-3  ">
+       <div className="sticky top-0 z-40 flex items-center gap-3 px-4 py-3  bg-gray-50  ">
             <button
               onClick={() => setIsOpen(v => !v)}
               className="h-8 w-8 flex items-center justify-center rounded hover:bg-gray-100 text-gray-700"
