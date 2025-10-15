@@ -1,16 +1,33 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle login logic here
+    
+    // Demo credentials for testing
+    const demoCredentials = {
+      email: 'admin@frappehr.com',
+      password: 'admin123'
+    };
+    
     console.log('Login attempt:', { email, password });
+    
+    // Check demo credentials
+    if (email === demoCredentials.email && password === demoCredentials.password) {
+      // Valid credentials - redirect to dashboard
+      router.push('/dashboard');
+    } else {
+      // Invalid credentials - show error (you can add error state later)
+      alert('Invalid credentials! Use:\nEmail: admin@frappehr.com\nPassword: admin123');
+    }
   };
 
   return (
@@ -122,6 +139,15 @@ export default function LoginForm() {
             <button className="w-full flex justify-center items-center py-1 px-4 bg-gray-100 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
               Login with Email Link
             </button>
+          </div>
+
+          {/* Demo Credentials */}
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="text-sm font-medium text-blue-900 mb-2">Demo Credentials:</h3>
+            <div className="text-xs text-blue-800 space-y-1">
+              <p><strong>Email:</strong> admin@frappehr.com</p>
+              <p><strong>Password:</strong> admin123</p>
+            </div>
           </div>
         </div>
       </div>
