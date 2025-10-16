@@ -22,7 +22,7 @@ import {
   Hammer
 } from 'lucide-react';
 
-export default function Sidebar({ isOpen, setIsOpen }) {   // ✅ props passed from parent
+export default function Sidebar({ isOpen, setIsOpen, setActiveContent }) {   // ✅ props passed from parent
   const [expandedSections, setExpandedSections] = useState({
     public: true,
     payroll: false,
@@ -109,11 +109,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {   // ✅ props passed f
       };
 
       return (
-        <div className='flex flex-col h-screen'>
-          {/* Top header with title and toggle (outside sidebar) */}
-         
-
-        <aside className={` border-r border-gray-200 h-screen overflow-y-auto transform transition-transform duration-200 ${isOpen ? 'translate-x-0 w-64' : '-translate-x-full'}`}>
+        <aside className={`border-r border-gray-200 h-full overflow-y-auto transform transition-transform duration-200 ${isOpen ? 'translate-x-0 w-64' : '-translate-x-full'}`}>
           <div className="p-2">
             {/* Sidebar header removed to avoid duplication; header lives above */}
           
@@ -136,7 +132,10 @@ export default function Sidebar({ isOpen, setIsOpen }) {   // ✅ props passed f
                   <div className="mt-0 space-y-0">
                     {/* HR (collapsible group) */}
                     <button
-                      onClick={() => toggleSection('hr')}
+                      onClick={() => {
+                        console.log('HR button clicked');
+                        setActiveContent('hr');
+                      }}
                       className="w-full flex items-center justify-between px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                     >
                       <span className="flex items-center space-x-2">
@@ -148,22 +147,34 @@ export default function Sidebar({ isOpen, setIsOpen }) {   // ✅ props passed f
 
                     {expandedSections.hr && (
                       <div className="pl-4 space-y-0">
-                        <a href="#" className="flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        <button 
+                          onClick={() => setActiveContent('recruitment')}
+                          className="w-full flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
                           {getIcon('users')}
                           <span>Recruitment</span>
-                        </a>
-                        <a href="#" className="flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        </button>
+                        <button 
+                          onClick={() => setActiveContent('lifecycle')}
+                          className="w-full flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
                           {getIcon('briefcaseOutline')}
                           <span>Employee Lifecycle</span>
-                        </a>
-                        <a href="#" className="flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        </button>
+                        <button 
+                          onClick={() => setActiveContent('performance')}
+                          className="w-full flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
                           {getIcon('star')}
                           <span>Performance</span>
-                        </a>
-                        <a href="#" className="flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        </button>
+                        <button 
+                          onClick={() => setActiveContent('shift-attendance')}
+                          className="w-full flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
                           {getIcon('clipboard')}
                           <span>Shift & Attendance</span>
-                        </a>
+                        </button>
                         <a href="#" className="flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
                           {getIcon('shield')}
                           <span>Expense Claims</span>
@@ -238,6 +249,5 @@ export default function Sidebar({ isOpen, setIsOpen }) {   // ✅ props passed f
             </nav>
           </div>
         </aside>
-        </div>
       );
     }

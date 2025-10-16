@@ -3,10 +3,9 @@
 import React, { useState } from 'react';
 import { Menu as MenuIcon } from 'lucide-react'; // ✅ FIXED: Added import
 
-export default function Header() {
+export default function Header({ isSidebarOpen, setIsSidebarOpen, activeContent }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showHelpDropdown, setShowHelpDropdown] = useState(false);
-  const [isOpen, setIsOpen] = useState(true); // ✅ You’re using setIsOpen below, so define it here
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -93,14 +92,16 @@ export default function Header() {
       </div>
        <div className="sticky top-0 z-40 flex items-center gap-3 px-4 py-3  bg-gray-50  ">
             <button
-              onClick={() => setIsOpen(v => !v)}
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="h-8 w-8 flex items-center justify-center rounded hover:bg-gray-100 text-gray-700"
               title="Toggle Sidebar"
               aria-label="Toggle Sidebar"
             >
               <MenuIcon className="h-5 w-5" />
               </button>
-            <h1 className="text-xl font-bold text-gray-900">Payables</h1>
+            <h1 className="text-xl font-bold text-gray-900">
+              {activeContent === 'hr' ? 'HR' : activeContent === 'recruitment' ? 'Recruitment' : activeContent === 'lifecycle' ? 'Lifecycle' : activeContent === 'performance' ? 'Performance' : activeContent === 'shift-attendance' ? 'Shift & Attendance' : 'Payables'}
+            </h1>
             </div>
     </header>
   );
