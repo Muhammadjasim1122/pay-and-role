@@ -127,7 +127,7 @@ export default function Performance() {
 
           {/* Two Column Layout: Interviews (Left) and Reports (Right) */}
           <div className="px-6 py-6">
-            <div className="grid grid-cols-5 gap-6">
+            <div className="grid grid-row-5 gap-6">
               {/* Left Column - Interviews Section */}
               <div className="col-span-2">
                 <div className="flex items-center justify-between mb-4">
