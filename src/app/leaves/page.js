@@ -2,12 +2,12 @@
 
 import React from 'react';
 import Layout from '@/components/layout/Layout';
-import Payroll from '@/components/main/hr/payroll';
+import Leaves from '@/components/main/hr/leaves';
 
-export default function PayrollPage() {
+export default function LeavesPage() {
   return (
     <Layout>
-      <Payroll />
+      <Leaves />
     </Layout>
   );
 }

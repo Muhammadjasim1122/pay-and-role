@@ -2,12 +2,12 @@
 
 import React from 'react';
 import Layout from '@/components/layout/Layout';
-import Payroll from '@/components/main/hr/payroll';
+import Website from '@/components/main/hr/website';
 
-export default function PayrollPage() {
+export default function WebsitePage() {
   return (
     <Layout>
-      <Payroll />
+      <Website />
     </Layout>
   );
 }

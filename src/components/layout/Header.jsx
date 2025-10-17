@@ -100,7 +100,7 @@ export default function Header({ isSidebarOpen, setIsSidebarOpen, activeContent 
               <MenuIcon className="h-5 w-5" />
               </button>
             <h1 className="text-xl font-bold text-gray-900">
-              {activeContent === 'hr' ? 'HR' : activeContent === 'recruitment' ? 'Recruitment' : activeContent === 'lifecycle' ? 'Lifecycle' : activeContent === 'performance' ? 'Performance' : activeContent === 'shift-attendance' ? 'Shift & Attendance' : 'Payables'}
+              {activeContent === 'hr' ? 'HR' : activeContent === 'recruitment' ? 'Recruitment' : activeContent === 'lifecycle' ? 'Lifecycle' : activeContent === 'performance' ? 'Performance' : activeContent === 'shift-attendance' ? 'Shift & Attendance' : activeContent === 'expense-claims' ? 'Expense Claims' : activeContent === 'leaves' ? 'Leaves' : activeContent === 'projects' ? 'Projects' : activeContent === 'users' ? 'Users' : activeContent === 'website' ? 'Website' : activeContent === 'payroll' ? 'Payroll' : activeContent === 'salary-payout' ? 'Salary Payout' : activeContent === 'tax-and-payout' ? 'Tax & Payout' : activeContent === 'tools' ? 'Tools' : 'Payables'}
             </h1>
             </div>
     </header>

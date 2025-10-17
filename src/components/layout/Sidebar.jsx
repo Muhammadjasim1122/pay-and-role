@@ -175,30 +175,55 @@ export default function Sidebar({ isOpen, setIsOpen, setActiveContent }) {   // 
                           {getIcon('clipboard')}
                           <span>Shift & Attendance</span>
                         </button>
-                        <a href="#" className="flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        <button 
+                          onClick={() => setActiveContent('expense-claims')}
+                          className="w-full flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
                           {getIcon('shield')}
                           <span>Expense Claims</span>
-                        </a>
-                        <a href="#" className="flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        </button>
+                        <button 
+                          onClick={() => setActiveContent('leaves')}
+                          className="w-full flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
                           {getIcon('heart')}
                           <span>Leaves</span>
-                        </a>
+                        </button>
                       </div>
                     )}
 
                     {/* Siblings under PUBLIC */}
-                    <a href="#" className="flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                    <button 
+                      onClick={() => setActiveContent('projects')}
+                      className="w-full flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
                       {getIcon('folder')}
                       <span>Projects</span>
-                    </a>
-                    <a href="#" className="flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                    </button>
+                    <button 
+                      onClick={() => setActiveContent('users')}
+                      className="w-full flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
                       {getIcon('users')}
                       <span>Users</span>
-                    </a>
-                    <a href="#" className="flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                    </button>
+                    <button 
+                      onClick={() => setActiveContent('website')}
+                      className="w-full flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
                       {getIcon('monitor')}
                       <span>Website</span>
-                    </a>
+                    </button>
+                    <button 
+                      onClick={() => {
+                        console.log('Tools button clicked');
+                        setActiveContent('tools');
+                      }}
+                      className="w-full flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                      {getIcon('hammer')}
+                      <span>Tools</span>
+                    </button>
                   </div>
                 )}
               </div>
@@ -208,25 +233,28 @@ export default function Sidebar({ isOpen, setIsOpen, setActiveContent }) {   // 
                   {/* PAYROLL Section */}
                   <div>
                     <button
-                      onClick={() => toggleSection('payroll')}
-                      className="w-full flex items-center justify-between px-2 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                      onClick={() => setActiveContent('payroll')}
+                      className="w-full flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                     >
-                      <span className="flex items-center space-x-2">
-                        {getIcon('coins')}
-                        <span className="text-sm">Payroll</span>
-                      </span>
-                      <ChevronDown className={`h-4 w-4 transition-transform ${expandedSections.payroll ? 'rotate-180' : ''}`} />
+                      {getIcon('coins')}
+                      <span>Payroll</span>
                     </button>
                     {expandedSections.payroll && (
                       <div className="pl-4 space-y-0">
-                        <a href="#" className="flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        <button
+                          onClick={() => setActiveContent('salary-payout')}
+                          className="w-full flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
                           {getIcon('coins')}
                           <span>Salary Payout</span>
-                        </a>
-                        <a href="#" className="flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        </button>
+                        <button
+                          onClick={() => setActiveContent('tax-and-payout')}
+                          className="w-full flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
                           {getIcon('pie-chart')}
-                          <span>Tax & Benefits</span>
-                        </a>
+                          <span>Tax & Payout</span>
+                        </button>
                         </div>
                       )}
                   </div>
