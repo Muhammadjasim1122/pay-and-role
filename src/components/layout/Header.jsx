@@ -6,6 +6,7 @@ import { Menu as MenuIcon } from 'lucide-react'; // ✅ FIXED: Added import
 export default function Header({ isSidebarOpen, setIsSidebarOpen, activeContent }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showHelpDropdown, setShowHelpDropdown] = useState(false);
+  const [showThreeDotsDropdown, setShowThreeDotsDropdown] = useState(false);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -17,8 +18,8 @@ export default function Header({ isSidebarOpen, setIsSidebarOpen, activeContent 
       <div className="px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-200">
         <div className="flex justify-between items-center h-14">
           
-          {/* Left side - Logo */}
-          <div className="flex items-center">
+          {/* Left side - Logo and Breadcrumb */}
+          <div className="flex items-center space-x-3">
             <div className="w-8 h-8 flex items-center justify-center bg-green-500 rounded-md">
               <svg fill="none" height="32" viewBox="0 0 32 32" width="32" xmlns="http://www.w3.org/2000/svg">
                 <path d="M22.8571 0H9.14286C4.0934 0 0 4.0934 0 9.14286V22.8571C0 27.9066 4.0934 32 9.14286 32H22.8571C27.9066 32 32 27.9066 32 22.8571V9.14286C32 4.0934 27.9066 0 22.8571 0Z" fill="#06B58B"></path>
@@ -26,6 +27,64 @@ export default function Header({ isSidebarOpen, setIsSidebarOpen, activeContent 
                 <path d="M17.0514 6.85742H10.3542V9.14314H17.0514C18.3086 9.14314 19.3372 10.1717 19.3372 11.4289V13.5545C19.3372 14.8117 18.3086 15.8403 17.0514 15.8403H14.9257C13.6685 15.8403 12.64 14.8117 12.64 13.5545V12.1145H10.3542V13.5545C10.3542 16.0803 12.4 18.126 14.9257 18.126H17.0514C19.5772 18.126 21.6229 16.0803 21.6229 13.5545V11.4289C21.6229 8.90314 19.5772 6.85742 17.0514 6.85742Z" fill="white"></path>
               </svg>
             </div>
+            
+            {/* Breadcrumb Navigation */}
+            {activeContent === 'hr-settings' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    // Dispatch custom event to change activeContent to 'hr'
+                    const event = new CustomEvent('setActiveContent', { detail: 'hr' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
+                >
+                  HR
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">HR Settings</span>
+              </div>
+            )}
+            
+            {activeContent === 'holiday-list' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    // Dispatch custom event to change activeContent to 'hr'
+                    const event = new CustomEvent('setActiveContent', { detail: 'hr' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
+                >
+                  HR
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">Holiday List</span>
+              </div>
+            )}
+            
+            {activeContent === 'employee' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    // Dispatch custom event to change activeContent to 'hr'
+                    const event = new CustomEvent('setActiveContent', { detail: 'hr' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
+                >
+                  Employee
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">New Employee</span>
+              </div>
+            )}
           </div>
 
           {/* Center - Search Bar */}
@@ -90,18 +149,86 @@ export default function Header({ isSidebarOpen, setIsSidebarOpen, activeContent 
           </div>
         </div>
       </div>
-       <div className="sticky top-0 z-40 flex items-center gap-3 px-4 py-3  bg-gray-50  ">
-            <button
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="h-8 w-8 flex items-center justify-center rounded hover:bg-gray-100 text-gray-700"
-              title="Toggle Sidebar"
-              aria-label="Toggle Sidebar"
-            >
-              <MenuIcon className="h-5 w-5" />
+       <div className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-gray-50">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="h-8 w-8 flex items-center justify-center rounded hover:bg-gray-100 text-gray-700"
+                title="Toggle Sidebar"
+                aria-label="Toggle Sidebar"
+              >
+                <MenuIcon className="h-5 w-5" />
               </button>
-            <h1 className="text-xl font-bold text-gray-900">
-              {activeContent === 'hr' ? 'HR' : activeContent === 'recruitment' ? 'Recruitment' : activeContent === 'lifecycle' ? 'Lifecycle' : activeContent === 'performance' ? 'Performance' : activeContent === 'shift-attendance' ? 'Shift & Attendance' : activeContent === 'expense-claims' ? 'Expense Claims' : activeContent === 'leaves' ? 'Leaves' : activeContent === 'projects' ? 'Projects' : activeContent === 'users' ? 'Users' : activeContent === 'website' ? 'Website' : activeContent === 'payroll' ? 'Payroll' : activeContent === 'salary-payout' ? 'Salary Payout' : activeContent === 'tax-and-payout' ? 'Tax & Payout' : activeContent === 'tools' ? 'Tools' : 'Payables'}
-            </h1>
+              <h1 className="text-xl font-bold text-gray-900">
+                {activeContent === 'hr' ? 'HR' : activeContent === 'recruitment' ? 'Recruitment' : activeContent === 'lifecycle' ? 'Lifecycle' : activeContent === 'performance' ? 'Performance' : activeContent === 'shift-attendance' ? 'Shift & Attendance' : activeContent === 'expense-claims' ? 'Expense Claims' : activeContent === 'leaves' ? 'Leaves' : activeContent === 'projects' ? 'Projects' : activeContent === 'users' ? 'Users' : activeContent === 'website' ? 'Website' : activeContent === 'payroll' ? 'Payroll' : activeContent === 'salary-payout' ? 'Salary Payout' : activeContent === 'tax-and-payout' ? 'Tax & Payout' : activeContent === 'tools' ? 'Tools' : activeContent === 'erpnext-settings' ? 'ERPNext Settings' : activeContent === 'integrations' ? 'Integrations' : activeContent === 'erpnext-integrations' ? 'ERPNext Integrations' : activeContent === 'build' ? 'Build' : activeContent === 'hr-settings' ? 'HR Settings' : activeContent === 'holiday-list' ? 'Holiday List' : activeContent === 'employee' ? 'New Employee' : 'Payables'}
+              </h1>
+            </div>
+            
+            {/* Action Buttons - Show for HR Settings */}
+            {activeContent === 'hr-settings' && (
+              <div className="flex items-center space-x-2">
+                {/* Three Dots Menu Button with Dropdown */}
+                <div className="relative">
+                  <button 
+                    onClick={() => setShowThreeDotsDropdown(!showThreeDotsDropdown)}
+                    className="p-2 text-gray-600 hover:text-gray-900 bg-gray-200 rounded-lg transition-colors border border-gray-300 bg-grey "
+                  >
+                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
+                    </svg>
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {showThreeDotsDropdown && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                      <div className="px-3 py-2 flex items-center justify-between hover:bg-gray-50 cursor-pointer">
+                        <span className="text-sm text-gray-700">Email</span>
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Ctrl+E</span>
+                      </div>
+                      <div className="px-3 py-2 flex items-center justify-between hover:bg-gray-50 cursor-pointer">
+                        <span className="text-sm text-gray-700">Jump to field</span>
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Ctrl+J</span>
+                      </div>
+                      <div className="px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                        <span className="text-sm text-gray-700">Copy to Clipboard</span>
+                      </div>
+                      <div className="px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                        <span className="text-sm text-gray-700">Reload</span>
+                      </div>
+                      <div className="px-3 py-2 flex items-center justify-between hover:bg-gray-50 cursor-pointer">
+                        <span className="text-sm text-gray-700">Remind Me</span>
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded flex items-center">
+                          <svg className="h-3 w-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+                          </svg>
+                          +R
+                        </span>
+                      </div>
+                      <div className="px-3 py-2 flex items-center justify-between hover:bg-gray-50 cursor-pointer">
+                        <span className="text-sm text-gray-700">Undo</span>
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Ctrl+Z</span>
+                      </div>
+                      <div className="px-3 py-2 flex items-center justify-between hover:bg-gray-50 cursor-pointer">
+                        <span className="text-sm text-gray-700">Redo</span>
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Ctrl+Y</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Save Button */}
+                <button className="px-3 py-2 bg-gray-800 text-white text-sm font-medium rounded-lg hover:bg-gray-900 transition-colors">
+                  Save
+                </button>
+              </div>
+            )}
+            
+            {/* Save Button Only for Employee */}
+            {activeContent === 'employee' && (
+              <button className="px-4 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800 transition-colors">
+                Save
+              </button>
+            )}
             </div>
     </header>
   );

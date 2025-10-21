@@ -18,6 +18,14 @@ import Payroll from '../main/hr/payroll';
 import SalaryPayout from '../main/hr/salary-payout';
 import TaxAndPayout from '../main/hr/tax-and-payout';
 import Tools from '../main/hr/tools';
+import ERPNext from '../main/hr/erpnext';
+import Integrations from '../main/hr/integrations';
+import ERPNextIntegrations from '../main/hr/erpnext-integrations';
+import Build from '../main/hr/build';
+import HRSettings from '../main/hr/settings/hr-settings';
+import HRSettingsSidebar from '../main/hr/settings/hr-settings-sidebar';
+import HolidayList from '../main/hr/settings/holiday-list';
+import Employee from '../main/hr/settings/employee';
 
 export default function Layout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -71,13 +79,34 @@ export default function Layout({ children }) {
     } else if (activeContent === 'tools') {
       // Update browser title
       document.title = 'Tools - HRM App';
+    } else if (activeContent === 'erpnext-settings') {
+      // Update browser title
+      document.title = 'ERPNext Settings - HRM App';
+    } else if (activeContent === 'integrations') {
+      // Update browser title
+      document.title = 'Integrations - HRM App';
+    } else if (activeContent === 'erpnext-integrations') {
+      // Update browser title
+      document.title = 'ERPNext Integrations - HRM App';
+    } else if (activeContent === 'build') {
+      // Update browser title
+      document.title = 'Build - HRM App';
+    } else if (activeContent === 'hr-settings') {
+      // Update browser title
+      document.title = 'HR Settings - HRM App';
+    } else if (activeContent === 'holiday-list') {
+      // Update browser title
+      document.title = 'Holiday List - HRM App';
+    } else if (activeContent === 'employee') {
+      // Update browser title
+      document.title = 'New Employee - HRM App';
     } else {
       // Reset to default
       document.title = 'HRM App';
     }
   }, [activeContent]);
 
-  // Handle browser back/forward navigation
+  // Handle browser back/forward navigation and custom events
   useEffect(() => {
     const handlePopState = (event) => {
       if (event.state?.activeContent === 'hr') {
@@ -108,15 +137,35 @@ export default function Layout({ children }) {
         setActiveContent('tax-and-payout');
       } else if (event.state?.activeContent === 'tools') {
         setActiveContent('tools');
+      } else if (event.state?.activeContent === 'erpnext-settings') {
+        setActiveContent('erpnext-settings');
+      } else if (event.state?.activeContent === 'integrations') {
+        setActiveContent('integrations');
+      } else if (event.state?.activeContent === 'erpnext-integrations') {
+        setActiveContent('erpnext-integrations');
+      } else if (event.state?.activeContent === 'build') {
+        setActiveContent('build');
+      } else if (event.state?.activeContent === 'hr-settings') {
+        setActiveContent('hr-settings');
+      } else if (event.state?.activeContent === 'holiday-list') {
+        setActiveContent('holiday-list');
+      } else if (event.state?.activeContent === 'employee') {
+        setActiveContent('employee');
       } else {
         setActiveContent('default');
       }
     };
 
+    const handleSetActiveContent = (event) => {
+      setActiveContent(event.detail);
+    };
+
     window.addEventListener('popstate', handlePopState);
-    
+    window.addEventListener('setActiveContent', handleSetActiveContent);
+
     return () => {
       window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('setActiveContent', handleSetActiveContent);
     };
   }, []);
 
@@ -130,19 +179,34 @@ export default function Layout({ children }) {
       />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <Sidebar 
-          isOpen={isSidebarOpen} 
-          setIsOpen={setIsSidebarOpen}
-          setActiveContent={setActiveContent}
-        />
+        {/* Sidebar - Hide for Holiday List and Employee */}
+        {activeContent !== 'holiday-list' && activeContent !== 'employee' && (
+          <>
+            {activeContent === 'hr-settings' ? (
+              <HRSettingsSidebar 
+                isOpen={isSidebarOpen} 
+                setIsOpen={setIsSidebarOpen} 
+                setActiveContent={setActiveContent} 
+              /> 
+            ) : ( 
+              <Sidebar 
+                isOpen={isSidebarOpen} 
+                setIsOpen={setIsSidebarOpen} 
+                setActiveContent={setActiveContent} 
+              /> 
+            )}
+          </>
+        )}
 
         {/* Main Content */}
         <main
           id="page-content"
-          className={`flex-1 overflow-auto transition-all duration-300 ${isSidebarOpen ? ' ' : 'ml-0'}`}
+          className="flex-1 overflow-auto"
         >
-          {activeContent === 'hr' ? <HR /> : activeContent === 'recruitment' ? <Recruitment /> : activeContent === 'lifecycle' ? <Lifecycle /> : activeContent === 'performance' ? <Performance /> : activeContent === 'shift-attendance' ? <ShiftAttendance /> : activeContent === 'expense-claims' ? <ExpenseClaims /> : activeContent === 'leaves' ? <Leaves /> : activeContent === 'projects' ? <Projects /> : activeContent === 'users' ? <Users /> : activeContent === 'website' ? <Website /> : activeContent === 'payroll' ? <Payroll /> : activeContent === 'salary-payout' ? <SalaryPayout /> : activeContent === 'tax-and-payout' ? <TaxAndPayout /> : activeContent === 'tools' ? <Tools /> : children}
+          {activeContent === 'hr' ? <HR /> : activeContent === 'recruitment' ? <Recruitment /> : activeContent === 'lifecycle' ? <Lifecycle /> : activeContent === 'performance' ? <Performance /> : activeContent === 'shift-attendance' ? <ShiftAttendance /> : activeContent === 'expense-claims' ? <ExpenseClaims /> : activeContent === 'leaves' ? <Leaves /> : activeContent === 'projects' ? <Projects /> : activeContent === 'users' ? <Users /> : activeContent === 'website' ? <Website /> : activeContent === 'payroll' ? <Payroll /> : activeContent === 'salary-payout' ? <SalaryPayout /> : activeContent === 'tax-and-payout' ? <TaxAndPayout /> : activeContent === 'tools' ? <Tools /> 
+          : activeContent === 'erpnext-settings' ? <ERPNext /> : activeContent === 'integrations' ? <Integrations /> 
+           : activeContent === 'erpnext-integrations' ? <ERPNextIntegrations /> : activeContent === 'build' ? <Build />
+            : activeContent === 'hr-settings' ? <HRSettings /> : activeContent === 'holiday-list' ? <HolidayList /> : activeContent === 'employee' ? <Employee /> : children}
         </main>
       </div>
     </div>

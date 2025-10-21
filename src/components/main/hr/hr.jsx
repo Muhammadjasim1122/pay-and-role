@@ -214,7 +214,20 @@ export default function HR({
                   )}
                   
                   {selectedStepData.hasExplore && (
-                    <button className="inline-flex items-center px-4 py-2 text-sm font-medium text-black bg-gray-200 rounded-md hover:bg-gray-300 transition-colors">
+                    <button 
+                      onClick={() => {
+                        if (selectedStepData.id === 'hr-settings') {
+                          window.location.href = '/hr/hr-settings';
+                        } else if (selectedStepData.id === 'holiday-list') {
+                          window.location.href = '/hr/holiday-list';
+                        } else if (selectedStepData.id === 'employee') {
+                          window.location.href = '/hr/employee';
+                        } else {
+                          // Handle other explore buttons
+                        }
+                      }}
+                      className="inline-flex items-center px-4 py-2 text-sm font-medium text-black bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                    >
                       {selectedStepData.buttonText}
                     </button>
                   )}

@@ -5,8 +5,6 @@ import { Plus, Edit3 } from 'lucide-react';
 import ModuleSections from '../../shared/ModuleSections';
 
 export default function Tools() {
-  console.log('Tools component is rendering');
-
   // Tools shortcuts data
   const toolsShortcuts = [
     { name: 'Import Data', link: '#' },
@@ -36,54 +34,53 @@ export default function Tools() {
         { name: 'Files', link: '#', hasArrow: true },
       ],
     },
-      {
-        category: 'Alerts and Notifications',
-        items: [
-          { name: 'Notification', link: '#', hasArrow: true },
-          { name: 'Auto Email Report', link: '#', hasArrow: true },
-          { name: 'Notification Settings', link: '#', hasArrow: true },
-        ],
-      },
-      {
-        category: 'Email',
-        items: [
-          { name: 'Email Account', link: '#', hasArrow: true },
-          { name: 'Email Domain', link: '#', hasArrow: true },
-          { name: 'Email Template', link: '#', hasArrow: true },
-        ],
-      },
-      {
-        category: 'Printing',
-        items: [
-          { name: 'Print Format Builder', link: '#', hasArrow: true },
-          { name: 'Print Format Builder (New)', link: '#', hasArrow: true },
-          { name: 'Print Settings', link: '#', hasArrow: true },
-          { name: 'Print Heading', link: '#', hasArrow: true },
-        ],
-      },
-      {
-        category: 'Automation',
-        items: [
-          { name: 'Assignment Rule', link: '#', hasArrow: true },
-          { name: 'Milestone', link: '#', hasArrow: true },
-          { name: 'Auto Repeat', link: '#', hasArrow: true },
-        ],
-      },
-      {
-        category: 'Newsletter',
-        items: [
-          { name: 'Newsletter', link: '#', hasArrow: true },
-          { name: 'Email Group', link: '#', hasArrow: true },
-        ],
-      },
-    ];
+    {
+      category: 'Alerts and Notifications',
+      items: [
+        { name: 'Notification', link: '#', hasArrow: true },
+        { name: 'Auto Email Report', link: '#', hasArrow: true },
+        { name: 'Notification Settings', link: '#', hasArrow: true },
+      ],
+    },
+    {
+      category: 'Email',
+      items: [
+        { name: 'Email Account', link: '#', hasArrow: true },
+        { name: 'Email Domain', link: '#', hasArrow: true },
+        { name: 'Email Template', link: '#', hasArrow: true },
+      ],
+    },
+    {
+      category: 'Printing',
+      items: [
+        { name: 'Print Format Builder', link: '#', hasArrow: true },
+        { name: 'Print Format Builder (New)', link: '#', hasArrow: true },
+        { name: 'Print Settings', link: '#', hasArrow: true },
+        { name: 'Print Heading', link: '#', hasArrow: true },
+      ],
+    },
+    {
+      category: 'Automation',
+      items: [
+        { name: 'Assignment Rule', link: '#', hasArrow: true },
+        { name: 'Milestone', link: '#', hasArrow: true },
+        { name: 'Auto Repeat', link: '#', hasArrow: true },
+      ],
+    },
+    {
+      category: 'Newsletter',
+      items: [
+        { name: 'Newsletter', link: '#', hasArrow: true },
+        { name: 'Email Group', link: '#', hasArrow: true },
+      ],
+    },
+  ];
 
   return (
     <div className="p-10 bg-gray-50 min-h-full">
       <div className="max-w-6xl mx-auto">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Tools Module</h1>
-          <p className="text-gray-600">This is the Tools module content.</p>
+          
           
           {/* Dynamic Module Sections */}
           <ModuleSections 
