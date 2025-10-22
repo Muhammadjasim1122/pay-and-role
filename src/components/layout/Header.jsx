@@ -85,6 +85,81 @@ export default function Header({ isSidebarOpen, setIsSidebarOpen, activeContent 
                 <span className="text-sm font-medium text-gray-900">New Employee</span>
               </div>
             )}
+            
+            {activeContent === 'leave-type' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    // Dispatch custom event to change activeContent to 'hr'
+                    const event = new CustomEvent('setActiveContent', { detail: 'hr' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
+                >
+                  HR
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer">
+                  Leave Type
+                </span>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">New Leave Type</span>
+              </div>
+            )}
+            
+            {activeContent === 'leave-allocation' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    // Dispatch custom event to change activeContent to 'hr'
+                    const event = new CustomEvent('setActiveContent', { detail: 'hr' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
+                >
+                  HR
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer">
+                  Leave Allocation
+                </span>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">New Leave Allocation</span>
+              </div>
+            )}
+            
+            {activeContent === 'leave-application' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    // Dispatch custom event to change activeContent to 'hr'
+                    const event = new CustomEvent('setActiveContent', { detail: 'hr' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
+                >
+                  HR
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer">
+                  Leave Application
+                </span>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">New Leave Application</span>
+              </div>
+            )}
           </div>
 
           {/* Center - Search Bar */}
@@ -151,16 +226,16 @@ export default function Header({ isSidebarOpen, setIsSidebarOpen, activeContent 
       </div>
        <div className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-gray-50">
             <div className="flex items-center gap-3">
-              <button
+            <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="h-8 w-8 flex items-center justify-center rounded hover:bg-gray-100 text-gray-700"
-                title="Toggle Sidebar"
-                aria-label="Toggle Sidebar"
-              >
-                <MenuIcon className="h-5 w-5" />
+              className="h-8 w-8 flex items-center justify-center rounded hover:bg-gray-100 text-gray-700"
+              title="Toggle Sidebar"
+              aria-label="Toggle Sidebar"
+            >
+              <MenuIcon className="h-5 w-5" />
               </button>
               <h1 className="text-xl font-bold text-gray-900">
-                {activeContent === 'hr' ? 'HR' : activeContent === 'recruitment' ? 'Recruitment' : activeContent === 'lifecycle' ? 'Lifecycle' : activeContent === 'performance' ? 'Performance' : activeContent === 'shift-attendance' ? 'Shift & Attendance' : activeContent === 'expense-claims' ? 'Expense Claims' : activeContent === 'leaves' ? 'Leaves' : activeContent === 'projects' ? 'Projects' : activeContent === 'users' ? 'Users' : activeContent === 'website' ? 'Website' : activeContent === 'payroll' ? 'Payroll' : activeContent === 'salary-payout' ? 'Salary Payout' : activeContent === 'tax-and-payout' ? 'Tax & Payout' : activeContent === 'tools' ? 'Tools' : activeContent === 'erpnext-settings' ? 'ERPNext Settings' : activeContent === 'integrations' ? 'Integrations' : activeContent === 'erpnext-integrations' ? 'ERPNext Integrations' : activeContent === 'build' ? 'Build' : activeContent === 'hr-settings' ? 'HR Settings' : activeContent === 'holiday-list' ? 'Holiday List' : activeContent === 'employee' ? 'New Employee' : 'Payables'}
+                {activeContent === 'hr' ? 'HR' : activeContent === 'recruitment' ? 'Recruitment' : activeContent === 'lifecycle' ? 'Lifecycle' : activeContent === 'performance' ? 'Performance' : activeContent === 'shift-attendance' ? 'Shift & Attendance' : activeContent === 'expense-claims' ? 'Expense Claims' : activeContent === 'leaves' ? 'Leaves' : activeContent === 'projects' ? 'Projects' : activeContent === 'users' ? 'Users' : activeContent === 'website' ? 'Website' : activeContent === 'payroll' ? 'Payroll' : activeContent === 'salary-payout' ? 'Salary Payout' : activeContent === 'tax-and-payout' ? 'Tax & Payout' : activeContent === 'tools' ? 'Tools' : activeContent === 'erpnext-settings' ? 'ERPNext Settings' : activeContent === 'integrations' ? 'Integrations' : activeContent === 'erpnext-integrations' ? 'ERPNext Integrations' : activeContent === 'build' ? 'Build' : activeContent === 'hr-settings' ? 'HR Settings' : activeContent === 'holiday-list' ? 'Holiday List' : activeContent === 'employee' ? 'New Employee' : activeContent === 'leave-type' ? 'New Leave Type' : activeContent === 'leave-allocation' ? 'New Leave Allocation' : activeContent === 'leave-application' ? 'New Leave Application' : 'Payables'}
               </h1>
             </div>
             
@@ -223,9 +298,15 @@ export default function Header({ isSidebarOpen, setIsSidebarOpen, activeContent 
               </div>
             )}
             
-            {/* Save Button Only for Employee */}
-            {activeContent === 'employee' && (
-              <button className="px-4 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800 transition-colors">
+            {/* Save Button Only for Employee, Leave Type, Leave Allocation, and Leave Application */}
+            {(activeContent === 'employee' || activeContent === 'leave-type' || activeContent === 'leave-allocation' || activeContent === 'leave-application') && (
+              <button 
+                onClick={() => {
+                  // Dispatch event to save form
+                  window.dispatchEvent(new CustomEvent('saveEmployeeForm'));
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800 transition-colors"
+              >
                 Save
               </button>
             )}

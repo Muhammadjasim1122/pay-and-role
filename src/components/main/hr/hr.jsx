@@ -12,6 +12,7 @@ export default function HR({
 }) {
   const [dismissed, setDismissed] = useState(false);
   const [selectedStep, setSelectedStep] = useState('hr-settings');
+  const [showImportDialog, setShowImportDialog] = useState(false);
 
   const setupSteps = [
     {
@@ -147,26 +148,27 @@ export default function HR({
   return (
     <div className="p-10  bg-gray-50 min-h-full">
       <div className="max-w-6xl mx-auto">
-        {/* Main Container with Single Border */}
-        <div className="bg-white rounded-lg border border-gray-200 ">
-          {/* Header */}
-          <div className="flex justify-between items-start p-6 pb-4">
-            <div>
-              <h1 className="text-1xl font-bold text-gray-900 mb-2">
-                {moduleTitle}
-              </h1>
-              <p className="text-gray-600">{moduleDescription}</p>
+        {/* Main Container with Single Border - Only show if not dismissed */}
+        {!dismissed && (
+          <div className="bg-white rounded-lg border border-gray-200 mb-6">
+            {/* Header */}
+            <div className="flex justify-between items-start p-6 pb-4">
+              <div>
+                <h1 className="text-1xl font-bold text-gray-900 mb-2">
+                  {moduleTitle}
+                </h1>
+                <p className="text-gray-600">{moduleDescription}</p>
+              </div>
+              <button
+                onClick={() => setDismissed(true)}
+                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              >
+                Dismiss
+              </button>
             </div>
-            <button
-              onClick={() => setDismissed(true)}
-              className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-            >
-              Dismiss
-            </button>
-          </div>
 
-          {/* Two Panel Layout */}
-          <div className="grid grid-cols-5 px-6 gap-4">
+            {/* Two Panel Layout */}
+            <div className="grid grid-cols-5 px-6 gap-4">
             {/* Left Panel - Setup Steps List */}
             <div className="col-span-2">
               <div className="">
@@ -222,6 +224,14 @@ export default function HR({
                           window.location.href = '/hr/holiday-list';
                         } else if (selectedStepData.id === 'employee') {
                           window.location.href = '/hr/employee';
+                        } else if (selectedStepData.id === 'import-data') {
+                          setShowImportDialog(true);
+                        } else if (selectedStepData.id === 'leave-type') {
+                          window.location.href = '/hr/leave-type';
+                        } else if (selectedStepData.id === 'leave-allocation') {
+                          window.location.href = '/hr/leave-allocation';
+                        } else if (selectedStepData.id === 'leave-application') {
+                          window.location.href = '/hr/leave-application';
                         } else {
                           // Handle other explore buttons
                         }
@@ -235,7 +245,11 @@ export default function HR({
               )}
             </div>
           </div>
+        </div>
+        )}
 
+        {/* Hiring vs Attrition Section - Always visible */}
+        <div className="bg-white rounded-lg border border-gray-200 mb-6">
           {/* Separator Line */}
           <div className="border-t border-gray-200 mx-6 my-6"></div>
 
@@ -296,11 +310,10 @@ export default function HR({
             </div>
           </div>
           </div>
+        </div>
 
-          {/* Separator Line */}
-          {/* <div className="border-t border-gray-200 mx-6"></div> */}
-
-          {/* Dynamic Module Sections */}
+        {/* Dynamic Module Sections - Always visible */}
+        <div className="bg-white rounded-lg border border-gray-200">
           <ModuleSections 
             shortcuts={yourShortcutsData}
             reportsAndMasters={reportsAndMastersData}
@@ -309,6 +322,40 @@ export default function HR({
           />
         </div>
       </div>
+
+      {/* Import Data Dialog */}
+      {showImportDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-[2px]">
+          <div className="relative bg-white rounded-xl shadow-2xl max-w-[600px] w-full mx-4">
+            {/* Dialog Header */}
+            <div className="flex items-center justify-between px-6 py-3 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Import Data from Spreadsheet
+              </h2>
+              <button
+                onClick={() => setShowImportDialog(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Dialog Content - Video */}
+            <div className="p-4">
+              <div className="relative w-full rounded-lg overflow-hidden" style={{ paddingBottom: '56.25%' }}>
+                <iframe
+                  className="absolute top-0 left-0 w-full h-full"
+                  src="https://www.youtube.com/embed/DQyqeurPI64"
+                  title="Importing Data to ERPNext"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                ></iframe>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

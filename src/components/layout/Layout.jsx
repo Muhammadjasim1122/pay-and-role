@@ -26,6 +26,9 @@ import HRSettings from '../main/hr/settings/hr-settings';
 import HRSettingsSidebar from '../main/hr/settings/hr-settings-sidebar';
 import HolidayList from '../main/hr/settings/holiday-list';
 import Employee from '../main/hr/settings/employee';
+import LeaveType from '../main/hr/settings/leave-type';
+import LeaveAllocation from '../main/hr/settings/leave-allocation';
+import LeaveApplication from '../main/hr/settings/leave-application';
 
 export default function Layout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -100,6 +103,15 @@ export default function Layout({ children }) {
     } else if (activeContent === 'employee') {
       // Update browser title
       document.title = 'New Employee - HRM App';
+    } else if (activeContent === 'leave-type') {
+      // Update browser title
+      document.title = 'New Leave Type - HRM App';
+    } else if (activeContent === 'leave-allocation') {
+      // Update browser title
+      document.title = 'New Leave Allocation - HRM App';
+    } else if (activeContent === 'leave-application') {
+      // Update browser title
+      document.title = 'New Leave Application - HRM App';
     } else {
       // Reset to default
       document.title = 'HRM App';
@@ -151,6 +163,12 @@ export default function Layout({ children }) {
         setActiveContent('holiday-list');
       } else if (event.state?.activeContent === 'employee') {
         setActiveContent('employee');
+      } else if (event.state?.activeContent === 'leave-type') {
+        setActiveContent('leave-type');
+      } else if (event.state?.activeContent === 'leave-allocation') {
+        setActiveContent('leave-allocation');
+      } else if (event.state?.activeContent === 'leave-application') {
+        setActiveContent('leave-application');
       } else {
         setActiveContent('default');
       }
@@ -179,10 +197,10 @@ export default function Layout({ children }) {
       />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar - Hide for Holiday List and Employee */}
-        {activeContent !== 'holiday-list' && activeContent !== 'employee' && (
+        {/* Sidebar - Hide for Holiday List, Leave Type, Leave Allocation, and Leave Application */}
+        {activeContent !== 'holiday-list' && activeContent !== 'leave-type' && activeContent !== 'leave-allocation' && activeContent !== 'leave-application' && (
           <>
-            {activeContent === 'hr-settings' ? (
+            {(activeContent === 'hr-settings' || activeContent === 'employee') ? (
               <HRSettingsSidebar 
                 isOpen={isSidebarOpen} 
                 setIsOpen={setIsSidebarOpen} 
@@ -203,10 +221,11 @@ export default function Layout({ children }) {
           id="page-content"
           className="flex-1 overflow-auto"
         >
-          {activeContent === 'hr' ? <HR /> : activeContent === 'recruitment' ? <Recruitment /> : activeContent === 'lifecycle' ? <Lifecycle /> : activeContent === 'performance' ? <Performance /> : activeContent === 'shift-attendance' ? <ShiftAttendance /> : activeContent === 'expense-claims' ? <ExpenseClaims /> : activeContent === 'leaves' ? <Leaves /> : activeContent === 'projects' ? <Projects /> : activeContent === 'users' ? <Users /> : activeContent === 'website' ? <Website /> : activeContent === 'payroll' ? <Payroll /> : activeContent === 'salary-payout' ? <SalaryPayout /> : activeContent === 'tax-and-payout' ? <TaxAndPayout /> : activeContent === 'tools' ? <Tools /> 
+          {activeContent === 'hr' ? <HR /> : activeContent === 'recruitment' ? <Recruitment /> : activeContent === 'lifecycle' ? <Lifecycle /> 
+          : activeContent === 'performance' ? <Performance /> : activeContent === 'shift-attendance' ? <ShiftAttendance /> : activeContent === 'expense-claims' ? <ExpenseClaims /> : activeContent === 'leaves' ? <Leaves /> : activeContent === 'projects' ? <Projects /> : activeContent === 'users' ? <Users /> : activeContent === 'website' ? <Website /> : activeContent === 'payroll' ? <Payroll /> : activeContent === 'salary-payout' ? <SalaryPayout /> : activeContent === 'tax-and-payout' ? <TaxAndPayout /> : activeContent === 'tools' ? <Tools /> 
           : activeContent === 'erpnext-settings' ? <ERPNext /> : activeContent === 'integrations' ? <Integrations /> 
            : activeContent === 'erpnext-integrations' ? <ERPNextIntegrations /> : activeContent === 'build' ? <Build />
-            : activeContent === 'hr-settings' ? <HRSettings /> : activeContent === 'holiday-list' ? <HolidayList /> : activeContent === 'employee' ? <Employee /> : children}
+            : activeContent === 'hr-settings' ? <HRSettings /> : activeContent === 'holiday-list' ? <HolidayList /> : activeContent === 'employee' ? <Employee /> : activeContent === 'leave-type' ? <LeaveType /> : activeContent === 'leave-allocation' ? <LeaveAllocation /> : activeContent === 'leave-application' ? <LeaveApplication /> : children}
         </main>
       </div>
     </div>
