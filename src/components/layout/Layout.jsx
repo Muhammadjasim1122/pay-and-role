@@ -4,7 +4,15 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from './Header';
 import Sidebar from './Sidebar';
+import { DashboardProvider } from '../../contexts/DashboardContext';
+import { EmployeeProvider } from '../../contexts/EmployeeContext';
+import { LeaveApplicationProvider } from '../../contexts/LeaveApplicationContext';
 import HR from '../main/hr/hr';
+import HRDashboard from '../main/hr/hr-dashboard';
+import HRDashboardForm from '../main/hr/hr-dashboard-form';
+import DashboardDetails from '../main/hr/dashboard-details';
+import RecruitmentDashboard from '../main/hr/recruitment-dashboard';
+import RecruitmentDetails from '../main/hr/recruitment-details';
 import Recruitment from '../main/hr/recruitment';
 import Lifecycle from '../main/hr/lifecycle';
 import Performance from '../main/hr/performance';
@@ -26,23 +34,73 @@ import HRSettings from '../main/hr/settings/hr-settings';
 import HRSettingsSidebar from '../main/hr/settings/hr-settings-sidebar';
 import HolidayList from '../main/hr/settings/holiday-list';
 import Employee from '../main/hr/settings/employee';
+import EmployeeList from '../main/hr/settings/employee-list';
 import LeaveType from '../main/hr/settings/leave-type';
 import LeaveAllocation from '../main/hr/settings/leave-allocation';
 import LeaveApplication from '../main/hr/settings/leave-application';
+import LeaveApplicationList from '../main/hr/settings/leave-application-list';
+import LifecycleDashboard from '../main/hr/lifecycle-dashboard';
+import LifecycleDashboardForm from '../main/hr/lifecycle-dashboard-form';
+import LifecycleDetails from '../main/hr/lifecycle-details';
+import AttendanceDashboard from '../main/hr/attendance-dashboard';
+import AttendanceDashboardForm from '../main/hr/attendance-dashboard-form';
+import AttendanceDetails from '../main/hr/attendance-details';
+import ExpenseClaimsDashboard from '../main/hr/expense-claims-dashboard';
+import ExpenseClaimsDashboardForm from '../main/hr/expense-claims-dashboard-form';
+import ExpenseClaimsDetails from '../main/hr/expense-claims-details';
 
 export default function Layout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [activeContent, setActiveContent] = useState('default');
+  const [activeContent, setActiveContent] = useState('hr-dashboard'); // Default to HR Dashboard
   
   // Debug logging
   console.log('Current activeContent:', activeContent);
   const router = useRouter();
+
+  // Set initial content based on URL state
+  useEffect(() => {
+    // Check if there's a state in the browser history
+    if (window.history.state?.activeContent) {
+      setActiveContent(window.history.state.activeContent);
+    } else {
+      // Default to HR Dashboard
+      setActiveContent('hr-dashboard');
+    }
+  }, []);
+
+  // Listen for custom navigation events
+  useEffect(() => {
+    const handleSetActiveContent = (event) => {
+      setActiveContent(event.detail);
+    };
+
+    window.addEventListener('setActiveContent', handleSetActiveContent);
+    
+    return () => {
+      window.removeEventListener('setActiveContent', handleSetActiveContent);
+    };
+  }, []);
 
   // Update browser title when activeContent changes
   useEffect(() => {
     if (activeContent === 'hr') {
       // Update browser title
       document.title = 'HR - HRM App';
+    } else if (activeContent === 'hr-dashboard') {
+      // Update browser title
+      document.title = 'HR Dashboard - HRM App';
+    } else if (activeContent === 'dashboard-form') {
+      // Update browser title
+      document.title = 'New Dashboard - HRM App';
+    } else if (activeContent === 'dashboard-details') {
+      // Update browser title
+      document.title = 'Dashboard Details - HRM App';
+    } else if (activeContent === 'recruitment-dashboard') {
+      // Update browser title
+      document.title = 'Recruitment Dashboard - HRM App';
+    } else if (activeContent === 'recruitment-details') {
+      // Update browser title
+      document.title = 'Recruitment Details - HRM App';
     } else if (activeContent === 'recruitment') {
       // Update browser title
       document.title = 'Recruitment - HRM App';
@@ -100,9 +158,12 @@ export default function Layout({ children }) {
     } else if (activeContent === 'holiday-list') {
       // Update browser title
       document.title = 'Holiday List - HRM App';
-    } else if (activeContent === 'employee') {
-      // Update browser title
-      document.title = 'New Employee - HRM App';
+      } else if (activeContent === 'employee-list') {
+        // Update browser title
+        document.title = 'Employee - HRM App';
+      } else if (activeContent === 'employee') {
+        // Update browser title
+        document.title = 'New Employee - HRM App';
     } else if (activeContent === 'leave-type') {
       // Update browser title
       document.title = 'New Leave Type - HRM App';
@@ -112,6 +173,36 @@ export default function Layout({ children }) {
     } else if (activeContent === 'leave-application') {
       // Update browser title
       document.title = 'New Leave Application - HRM App';
+    } else if (activeContent === 'leave-application-list') {
+      // Update browser title
+      document.title = 'Leave Applications - HRM App';
+    } else if (activeContent === 'lifecycle-dashboard') {
+      // Update browser title
+      document.title = 'Employee Lifecycle Dashboard - HRM App';
+    } else if (activeContent === 'lifecycle-dashboard-form') {
+      // Update browser title
+      document.title = 'New Lifecycle Dashboard - HRM App';
+    } else if (activeContent === 'lifecycle-details') {
+      // Update browser title
+      document.title = 'Employee Lifecycle Details - HRM App';
+    } else if (activeContent === 'attendance-dashboard') {
+      // Update browser title
+      document.title = 'Attendance Dashboard - HRM App';
+    } else if (activeContent === 'attendance-dashboard-form') {
+      // Update browser title
+      document.title = 'New Attendance Dashboard - HRM App';
+    } else if (activeContent === 'attendance-details') {
+      // Update browser title
+      document.title = 'Attendance Details - HRM App';
+    } else if (activeContent === 'expense-claims-dashboard') {
+      // Update browser title
+      document.title = 'Expense Claims Dashboard - HRM App';
+    } else if (activeContent === 'expense-claims-dashboard-form') {
+      // Update browser title
+      document.title = 'New Expense Claims Dashboard - HRM App';
+    } else if (activeContent === 'expense-claims-details') {
+      // Update browser title
+      document.title = 'Expense Claims Details - HRM App';
     } else {
       // Reset to default
       document.title = 'HRM App';
@@ -123,6 +214,16 @@ export default function Layout({ children }) {
     const handlePopState = (event) => {
       if (event.state?.activeContent === 'hr') {
         setActiveContent('hr');
+      } else if (event.state?.activeContent === 'hr-dashboard') {
+        setActiveContent('hr-dashboard');
+      } else if (event.state?.activeContent === 'dashboard-form') {
+        setActiveContent('dashboard-form');
+      } else if (event.state?.activeContent === 'dashboard-details') {
+        setActiveContent('dashboard-details');
+      } else if (event.state?.activeContent === 'recruitment-dashboard') {
+        setActiveContent('recruitment-dashboard');
+      } else if (event.state?.activeContent === 'recruitment-details') {
+        setActiveContent('recruitment-details');
       } else if (event.state?.activeContent === 'recruitment') {
         setActiveContent('recruitment');
       } else if (event.state?.activeContent === 'lifecycle') {
@@ -161,14 +262,36 @@ export default function Layout({ children }) {
         setActiveContent('hr-settings');
       } else if (event.state?.activeContent === 'holiday-list') {
         setActiveContent('holiday-list');
-      } else if (event.state?.activeContent === 'employee') {
-        setActiveContent('employee');
-      } else if (event.state?.activeContent === 'leave-type') {
+        } else if (event.state?.activeContent === 'employee-list') {
+          setActiveContent('employee-list');
+        } else if (event.state?.activeContent === 'employee') {
+          setActiveContent('employee');
+        } else if (event.state?.activeContent === 'leave-type') {
         setActiveContent('leave-type');
       } else if (event.state?.activeContent === 'leave-allocation') {
         setActiveContent('leave-allocation');
       } else if (event.state?.activeContent === 'leave-application') {
         setActiveContent('leave-application');
+      } else if (event.state?.activeContent === 'leave-application-list') {
+        setActiveContent('leave-application-list');
+      } else if (event.state?.activeContent === 'lifecycle-dashboard') {
+        setActiveContent('lifecycle-dashboard');
+      } else if (event.state?.activeContent === 'lifecycle-dashboard-form') {
+        setActiveContent('lifecycle-dashboard-form');
+      } else if (event.state?.activeContent === 'lifecycle-details') {
+        setActiveContent('lifecycle-details');
+      } else if (event.state?.activeContent === 'attendance-dashboard') {
+        setActiveContent('attendance-dashboard');
+      } else if (event.state?.activeContent === 'attendance-dashboard-form') {
+        setActiveContent('attendance-dashboard-form');
+      } else if (event.state?.activeContent === 'attendance-details') {
+        setActiveContent('attendance-details');
+      } else if (event.state?.activeContent === 'expense-claims-dashboard') {
+        setActiveContent('expense-claims-dashboard');
+      } else if (event.state?.activeContent === 'expense-claims-dashboard-form') {
+        setActiveContent('expense-claims-dashboard-form');
+      } else if (event.state?.activeContent === 'expense-claims-details') {
+        setActiveContent('expense-claims-details');
       } else {
         setActiveContent('default');
       }
@@ -188,13 +311,16 @@ export default function Layout({ children }) {
   }, []);
 
   return (
-    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
-      {/* Header */}
-      <Header 
-        isSidebarOpen={isSidebarOpen} 
-        setIsSidebarOpen={setIsSidebarOpen}
-        activeContent={activeContent}
-      />
+    <DashboardProvider>
+      <EmployeeProvider>
+        <LeaveApplicationProvider>
+        <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+        {/* Header */}
+        <Header 
+          isSidebarOpen={isSidebarOpen} 
+          setIsSidebarOpen={setIsSidebarOpen}
+          activeContent={activeContent}
+        />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - Hide for Holiday List, Leave Type, Leave Allocation, and Leave Application */}
@@ -221,13 +347,16 @@ export default function Layout({ children }) {
           id="page-content"
           className="flex-1 overflow-auto"
         >
-          {activeContent === 'hr' ? <HR /> : activeContent === 'recruitment' ? <Recruitment /> : activeContent === 'lifecycle' ? <Lifecycle /> 
+          {activeContent === 'hr' ? <HR /> : activeContent === 'hr-dashboard' ? <HRDashboard /> : activeContent === 'dashboard-form' ? <HRDashboardForm dashboardType="hr" isSidebarOpen={isSidebarOpen} /> : activeContent === 'recruitment-dashboard-form' ? <HRDashboardForm dashboardType="recruitment" isSidebarOpen={isSidebarOpen} /> : activeContent === 'dashboard-details' ? <DashboardDetails /> : activeContent === 'recruitment-dashboard' ? <RecruitmentDashboard /> : activeContent === 'recruitment-details' ? <RecruitmentDetails /> : activeContent === 'recruitment' ? <Recruitment /> : activeContent === 'lifecycle' ? <Lifecycle /> 
           : activeContent === 'performance' ? <Performance /> : activeContent === 'shift-attendance' ? <ShiftAttendance /> : activeContent === 'expense-claims' ? <ExpenseClaims /> : activeContent === 'leaves' ? <Leaves /> : activeContent === 'projects' ? <Projects /> : activeContent === 'users' ? <Users /> : activeContent === 'website' ? <Website /> : activeContent === 'payroll' ? <Payroll /> : activeContent === 'salary-payout' ? <SalaryPayout /> : activeContent === 'tax-and-payout' ? <TaxAndPayout /> : activeContent === 'tools' ? <Tools /> 
           : activeContent === 'erpnext-settings' ? <ERPNext /> : activeContent === 'integrations' ? <Integrations /> 
            : activeContent === 'erpnext-integrations' ? <ERPNextIntegrations /> : activeContent === 'build' ? <Build />
-            : activeContent === 'hr-settings' ? <HRSettings /> : activeContent === 'holiday-list' ? <HolidayList /> : activeContent === 'employee' ? <Employee /> : activeContent === 'leave-type' ? <LeaveType /> : activeContent === 'leave-allocation' ? <LeaveAllocation /> : activeContent === 'leave-application' ? <LeaveApplication /> : children}
+            : activeContent === 'hr-settings' ? <HRSettings /> : activeContent === 'holiday-list' ? <HolidayList /> : activeContent === 'employee-list' ? <EmployeeList /> : activeContent === 'employee' ? <Employee /> : activeContent === 'leave-type' ? <LeaveType /> : activeContent === 'leave-allocation' ? <LeaveAllocation /> : activeContent === 'leave-application' ? <LeaveApplication isSidebarOpen={isSidebarOpen} /> : activeContent === 'leave-application-list' ? <LeaveApplicationList /> : activeContent === 'lifecycle-dashboard' ? <LifecycleDashboard /> : activeContent === 'lifecycle-dashboard-form' ? <LifecycleDashboardForm dashboardType="lifecycle" isSidebarOpen={isSidebarOpen} /> : activeContent === 'lifecycle-details' ? <LifecycleDetails /> : activeContent === 'attendance-dashboard' ? <AttendanceDashboard /> : activeContent === 'attendance-dashboard-form' ? <AttendanceDashboardForm dashboardType="attendance" isSidebarOpen={isSidebarOpen} /> : activeContent === 'attendance-details' ? <AttendanceDetails /> : activeContent === 'expense-claims-dashboard' ? <ExpenseClaimsDashboard /> : activeContent === 'expense-claims-dashboard-form' ? <ExpenseClaimsDashboardForm dashboardType="expense-claims" isSidebarOpen={isSidebarOpen} /> : activeContent === 'expense-claims-details' ? <ExpenseClaimsDetails /> : children}
         </main>
       </div>
-    </div>
+        </div>
+        </LeaveApplicationProvider>
+      </EmployeeProvider>
+    </DashboardProvider>
   );
 }

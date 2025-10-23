@@ -19,7 +19,9 @@ import {
   ChevronDown,
   Coins,
   PieChart,
-  Hammer
+  Hammer,
+  FileText,
+  UserPlus
 } from 'lucide-react';
 
 export default function Sidebar({ isOpen, setIsOpen, setActiveContent }) {   // ✅ props passed from parent
@@ -82,8 +84,8 @@ export default function Sidebar({ isOpen, setIsOpen, setActiveContent }) {   // 
     { id: 'build', title: 'Build', icon: 'hammer', href: '#' }
   ];
 
-  const getIcon = (iconName) => {
-    const commonProps = { size: 16, strokeWidth: 1.75, className: 'shrink-0' };
+  const getIcon = (iconName, size = 16) => {
+    const commonProps = { size: size, strokeWidth: 1.75, className: 'shrink-0' };
     const map = {
       briefcase: <Briefcase {...commonProps} />,
       briefcaseOutline: <BriefcaseBusiness {...commonProps} />,
@@ -100,7 +102,9 @@ export default function Sidebar({ isOpen, setIsOpen, setActiveContent }) {   // 
       link2: <Link2 {...commonProps} />,
       coins: <Coins {...commonProps} />,
       'pie-chart': <PieChart {...commonProps} />,
-      hammer: <Hammer {...commonProps} />
+      hammer: <Hammer {...commonProps} />,
+      'file-text': <FileText {...commonProps} />,
+      'user-plus': <UserPlus {...commonProps} />
     };
     return map[iconName] || null;
   };
@@ -129,11 +133,8 @@ export default function Sidebar({ isOpen, setIsOpen, setActiveContent }) {   // 
               <div className="mt-0 space-y-0">
                 {/* HR (collapsible group) */}
                 <button
-                  onClick={() => {
-                    console.log('HR button clicked');
-                    setActiveContent('hr');
-                  }}
-                  className="w-full flex items-center justify-between px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  onClick={() => toggleSection('hr')}
+                  className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   <span className="flex items-center space-x-2">
                     {getIcon('briefcase')}
@@ -143,7 +144,96 @@ export default function Sidebar({ isOpen, setIsOpen, setActiveContent }) {   // 
                 </button>
 
                 {expandedSections.hr && (
-                  <div className="pl-4 space-y-0">
+                  <div className="pl-6 space-y-1 mt-1">
+                     <button 
+                      onClick={() => setActiveContent('hr-dashboard')}
+                      className="w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
+                    >
+                      {getIcon('pie-chart', 14)}
+                      <span>HR Dashboard</span>
+                    </button>
+                    <button 
+                      onClick={() => setActiveContent('dashboard-details')}
+                      className="w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
+                    >
+                      {getIcon('file-text', 14)}
+                      <span>Dashboard Details</span>
+                    </button>
+        <button 
+          onClick={() => setActiveContent('employee-list')}
+          className="w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
+        >
+          {getIcon('users', 14)}
+          <span>Employee</span>
+        </button>
+                    <button 
+                      onClick={() => setActiveContent('leave-application-list')}
+                      className="w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
+                    >
+                      {getIcon('heart', 14)}
+                      <span>Leave Application</span>
+                    </button>
+                   
+                    <button 
+                      onClick={() => setActiveContent('recruitment-dashboard')}
+                      className="w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
+                    >
+                      {getIcon('users', 14)}
+                      <span>Recruitment Dashboard</span>
+                    </button>
+                    <button 
+                      onClick={() => setActiveContent('recruitment-details')}
+                      className="w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
+                    >
+                      {getIcon('file-text', 14)}
+                      <span>Recruitment Details</span>
+                    </button>
+                    <button 
+                      onClick={() => setActiveContent('lifecycle-dashboard')}
+                      className="w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
+                    >
+                      {getIcon('briefcaseOutline', 14)}
+                      <span className="text-left">Employee Lifecycle Dashboard</span>
+                    </button>
+                    <button 
+                      onClick={() => setActiveContent('lifecycle-details')}
+                      className="w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
+                    >
+                      {getIcon('file-text', 14)}
+                      <span className="text-left">Employee Lifecycle Details</span>
+                    </button>
+                    <button 
+                      onClick={() => setActiveContent('attendance-dashboard')}
+                      className="w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
+                    >
+                      {getIcon('clipboard', 14)}
+                      <span>Attendance Dashboard</span>
+                    </button>
+                    <button 
+                      onClick={() => setActiveContent('attendance-details')}
+                      className="w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
+                    >
+                      {getIcon('file-text', 14)}
+                      <span>Attendance Details</span>
+                    </button>
+                    <button 
+                      onClick={() => setActiveContent('expense-claims-dashboard')}
+                      className="w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
+                    >
+                      {getIcon('shield', 14)}
+                      <span className="text-left">Expense Claims Dashboard</span>
+                    </button>
+                    <button 
+                      onClick={() => setActiveContent('expense-claims-details')}
+                      className="w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
+                    >
+                      {getIcon('file-text', 14)}
+                      <span>Expense Claims Details</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Siblings under PUBLIC */}
                     <button 
                       onClick={() => setActiveContent('recruitment')}
                       className="w-full flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
@@ -186,10 +276,6 @@ export default function Sidebar({ isOpen, setIsOpen, setActiveContent }) {   // 
                       {getIcon('heart')}
                       <span>Leaves</span>
                     </button>
-                  </div>
-                )}
-
-                {/* Siblings under PUBLIC */}
                 <button 
                   onClick={() => setActiveContent('projects')}
                   className="w-full flex items-center space-x-2 px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"

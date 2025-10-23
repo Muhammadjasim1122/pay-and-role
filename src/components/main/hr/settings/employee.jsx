@@ -20,8 +20,10 @@ import {
   Camera,
   Link as LinkIcon
 } from 'lucide-react';
+import { useEmployee } from '../../../../contexts/EmployeeContext';
 
 export default function Employee() {
+  const { addEmployee } = useEmployee();
   const [activeTab, setActiveTab] = useState('overview');
   const [series, setSeries] = useState('HR-EMP-');
   const [firstName, setFirstName] = useState('');
@@ -56,9 +58,51 @@ export default function Employee() {
     }
     
     // If validation passes, save the form
-    console.log('Form saved successfully');
-    setShowSaveAlert(true);
-    setTimeout(() => setShowSaveAlert(false), 3000);
+    try {
+      const employeeData = {
+        firstName,
+        middleName,
+        lastName,
+        gender,
+        dateOfBirth,
+        salutation,
+        dateOfJoining,
+        status,
+        // Add other form fields as needed
+        designation: '', // You can add designation field if needed
+        mobile,
+        personalEmail,
+        companyEmail,
+        currentAddress,
+        permanentAddress,
+        emergencyContactName,
+        emergencyPhone,
+        relation,
+        maritalStatus,
+        bloodGroup,
+        familyBackground,
+        healthDetails,
+        passportNumber,
+        bioCoverLetter
+      };
+      
+      addEmployee(employeeData);
+      setShowSaveAlert(true);
+      setTimeout(() => setShowSaveAlert(false), 3000);
+      
+      // Navigate back to employee list after successful save
+      setTimeout(() => {
+        const event = new CustomEvent('setActiveContent', { detail: 'employee-list' });
+        window.dispatchEvent(event);
+        window.history.pushState({ activeContent: 'employee-list' }, '', '/');
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Error saving employee:', error);
+      setValidationMessage('Error saving employee. Please try again.');
+      setShowValidationError(true);
+      setTimeout(() => setShowValidationError(false), 5000);
+    }
   };
   
   // Mark field as touched
@@ -345,9 +389,29 @@ export default function Employee() {
     setAttachmentToDelete(null);
   };
 
+  const handleBackToList = () => {
+    // Navigate back to Employee List
+    const event = new CustomEvent('setActiveContent', { detail: 'employee-list' });
+    window.dispatchEvent(event);
+    window.history.pushState({ activeContent: 'employee-list' }, '', '/');
+  };
+
   return (
     <div className="p-10 bg-gray-50 min-h-full">
       <div className="max-w-6xl mx-auto">
+        {/* Back Button */}
+        <div className="mb-6">
+          <button
+            onClick={handleBackToList}
+            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span className="text-sm font-medium">Back to Employee List</span>
+          </button>
+        </div>
+        
         {/* Success Alert */}
         {showSaveAlert && (
           <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">

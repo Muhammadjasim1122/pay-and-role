@@ -1,8 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useLeaveApplication } from '../../../../contexts/LeaveApplicationContext';
+import { Save, X } from 'lucide-react';
 
-export default function LeaveApplication() {
+export default function LeaveApplication({ isSidebarOpen = true }) {
+  const { addLeaveApplication } = useLeaveApplication();
   const colorPickerRef = useRef(null);
   const [series, setSeries] = useState('HR-LAP-.YYYY.-');
   const [employee, setEmployee] = useState('');
@@ -24,6 +27,9 @@ export default function LeaveApplication() {
   const [showBanner, setShowBanner] = useState(true);
   const [showEmployeeSuggestions, setShowEmployeeSuggestions] = useState(false);
   const [showLeaveTypeSuggestions, setShowLeaveTypeSuggestions] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertType, setAlertType] = useState('success');
 
   const colorSwatches = [
     '#3B82F6', '#F59E0B', '#10B981', '#8B5CF6', '#EF4444', 
@@ -48,9 +54,123 @@ export default function LeaveApplication() {
     };
   }, [showColorPicker]);
 
+  const handleSave = () => {
+    // Validate required fields
+    if (!employee.trim()) {
+      setAlertMessage('Employee is required!');
+      setAlertType('error');
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
+      return;
+    }
+
+    if (!leaveType.trim()) {
+      setAlertMessage('Leave Type is required!');
+      setAlertType('error');
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
+      return;
+    }
+
+    if (!fromDate) {
+      setAlertMessage('From Date is required!');
+      setAlertType('error');
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
+      return;
+    }
+
+    if (!toDate) {
+      setAlertMessage('To Date is required!');
+      setAlertType('error');
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
+      return;
+    }
+
+    if (!leaveApprover.trim()) {
+      setAlertMessage('Leave Approver is required!');
+      setAlertType('error');
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
+      return;
+    }
+
+    // Create application data
+    const applicationData = {
+      employee: employee.trim(),
+      employeeName: employee.trim(),
+      leaveType: leaveType.trim(),
+      company: company.trim(),
+      fromDate,
+      toDate,
+      halfDay,
+      reason: reason.trim(),
+      leaveApprover: leaveApprover.trim(),
+      postingDate,
+      status,
+      followViaEmail,
+      salarySlip: salarySlip.trim(),
+      letterHead: letterHead.trim(),
+      color: color || '#3B82F6'
+    };
+
+    try {
+      addLeaveApplication(applicationData);
+      setAlertMessage('Leave Application saved successfully!');
+      setAlertType('success');
+      setShowAlert(true);
+      
+      // Reset form
+      setEmployee('');
+      setLeaveType('');
+      setFromDate('');
+      setToDate('');
+      setHalfDay(false);
+      setReason('');
+      setLeaveApprover('');
+      setStatus('Open');
+      setFollowViaEmail(true);
+      setSalarySlip('');
+      setLetterHead('');
+      setColor('');
+      
+      setTimeout(() => setShowAlert(false), 3000);
+    } catch (error) {
+      setAlertMessage('Error saving leave application!');
+      setAlertType('error');
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
+    }
+  };
+
+  const handleCancel = () => {
+    // Navigate back to leave application list
+    const event = new CustomEvent('setActiveContent', { detail: 'leave-application-list' });
+    window.dispatchEvent(event);
+    window.history.pushState({ activeContent: 'leave-application-list' }, '', '/');
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className={`bg-gray-50 ${isSidebarOpen ? 'min-h-screen p-6' : 'min-h-screen p-6'}`}>
+      <div className={`mx-auto ${isSidebarOpen ? 'max-w-7xl' : 'max-w-full'}`}>
+        {/* Alert */}
+        {showAlert && (
+          <div className={`fixed top-4 right-4 z-50 p-4 rounded-md shadow-lg ${
+            alertType === 'success' ? 'bg-green-100 border border-green-400 text-green-700' : 'bg-red-100 border border-red-400 text-red-700'
+          }`}>
+            <div className="flex items-center justify-between">
+              <span>{alertMessage}</span>
+              <button 
+                onClick={() => setShowAlert(false)}
+                className="ml-4 text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Info Banner */}
         {showBanner && (
           <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-2 flex items-center justify-between">
@@ -457,6 +577,24 @@ export default function LeaveApplication() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="mt-8 flex justify-end space-x-4">
+              <button
+                onClick={handleCancel}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center space-x-2"
+              >
+                <X className="h-4 w-4" />
+                <span>Cancel</span>
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center space-x-2"
+              >
+                <Save className="h-4 w-4" />
+                <span>Save</span>
+              </button>
             </div>
 
           </div>
