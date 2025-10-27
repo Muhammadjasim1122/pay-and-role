@@ -1,45 +1,91 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { useDashboard } from '../../../contexts/DashboardContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function LifecycleDetails() {
   const { lifecycleDashboards } = useDashboard();
+  const [stats, setStats] = useState([
+    { title: 'ONBOARDINGS (THIS MONTH)', value: '0', color: 'text-gray-900' },
+    { title: 'SEPARATIONS (THIS MONTH)', value: '0', color: 'text-gray-900' },
+    { title: 'PROMOTIONS (THIS MONTH)', value: '0', color: 'text-gray-900' },
+    { title: 'TRANSFERS (THIS MONTH)', value: '0', color: 'text-gray-900' },
+    { title: 'TRAININGS (THIS MONTH)', value: '0', color: 'text-gray-900' },
+  ]);
 
-  // Get the most recent lifecycle dashboard for dynamic data
-  const latestDashboard = lifecycleDashboards.length > 0 ? lifecycleDashboards[0] : null;
+  // Calculate stats from localStorage data
+  useEffect(() => {
+    const calculateStats = () => {
+      if (typeof window === 'undefined') return;
 
-  // Calculate dynamic stats based on saved cards data
-  const getDynamicStats = () => {
-    const baseStats = [
-      { title: 'ONBOARDINGS (THIS MONTH)', value: '0', color: 'text-gray-900' },
-      { title: 'SEPARATIONS (THIS MONTH)', value: '0', color: 'text-gray-900' },
-      { title: 'PROMOTIONS (THIS MONTH)', value: '0', color: 'text-gray-900' },
-      { title: 'TRANSFERS (THIS MONTH)', value: '0', color: 'text-gray-900' },
-      { title: 'TRAININGS (THIS MONTH)', value: '0', color: 'text-gray-900' },
-    ];
+      const onboardings = JSON.parse(localStorage.getItem('employeeOnboardings') || '[]');
+      const separations = JSON.parse(localStorage.getItem('employeeSeparations') || '[]');
+      const grievances = JSON.parse(localStorage.getItem('employeeGrievances') || '[]');
 
-    if (latestDashboard && latestDashboard.cards && latestDashboard.cards.length > 0) {
-      // Update stats based on saved cards data
-      const cardCount = latestDashboard.cards.length;
-      const chartCount = latestDashboard.charts ? latestDashboard.charts.length : 0;
-      
-      return baseStats.map((stat, index) => {
-        if (index === 0) return { ...stat, value: cardCount.toString() };
-        if (index === 1) return { ...stat, value: chartCount.toString() };
-        if (index === 2) return { ...stat, value: (cardCount * 2).toString() };
-        if (index === 3) return { ...stat, value: (cardCount * 0.5).toString() };
-        if (index === 4) return { ...stat, value: (chartCount * 3).toString() };
-        return stat;
+      // Get current month and year
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
+      // Filter data for this month
+      const thisMonthOnboardings = onboardings.filter(item => {
+        if (!item.dateOfJoining && !item.date && !item.onboardingBeginsOn) return false;
+        const date = new Date(item.onboardingBeginsOn || item.dateOfJoining || item.date);
+        return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
       });
-    }
 
-    return baseStats;
-  };
+      const thisMonthSeparations = separations.filter(item => {
+        if (!item.dateOfSeparation && !item.date && !item.separationBeginsOn) return false;
+        const date = new Date(item.separationBeginsOn || item.dateOfSeparation || item.date);
+        return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+      });
 
-  const stats = getDynamicStats();
+      const thisMonthGrievances = grievances.filter(item => {
+        if (!item.date) return false;
+        const date = new Date(item.date);
+        return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+      });
+
+      // Calculate promotions, transfers, trainings from grievances
+      const thisMonthPromotions = thisMonthGrievances.filter(g => 
+        g.grievanceType && g.grievanceType.toLowerCase().includes('promotion')
+      ).length;
+      
+      const thisMonthTransfers = thisMonthGrievances.filter(g => 
+        g.grievanceType && g.grievanceType.toLowerCase().includes('transfer')
+      ).length;
+      
+      const thisMonthTrainings = thisMonthGrievances.filter(g => 
+        g.grievanceType && g.grievanceType.toLowerCase().includes('training')
+      ).length;
+
+      setStats([
+        { title: 'ONBOARDINGS (THIS MONTH)', value: thisMonthOnboardings.length.toString(), color: 'text-gray-900' },
+        { title: 'SEPARATIONS (THIS MONTH)', value: thisMonthSeparations.length.toString(), color: 'text-gray-900' },
+        { title: 'PROMOTIONS (THIS MONTH)', value: thisMonthPromotions.toString(), color: 'text-gray-900' },
+        { title: 'TRANSFERS (THIS MONTH)', value: thisMonthTransfers.toString(), color: 'text-gray-900' },
+        { title: 'TRAININGS (THIS MONTH)', value: thisMonthTrainings.toString(), color: 'text-gray-900' },
+      ]);
+    };
+
+    calculateStats();
+
+    // Listen for data changes
+    const handleStorageChange = () => calculateStats();
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('onboardingDataChanged', handleStorageChange);
+    window.addEventListener('separationDataChanged', handleStorageChange);
+    window.addEventListener('grievanceDataChanged', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('onboardingDataChanged', handleStorageChange);
+      window.removeEventListener('separationDataChanged', handleStorageChange);
+      window.removeEventListener('grievanceDataChanged', handleStorageChange);
+    };
+  }, []);
 
   // Chart data for Y-O-Y charts
   const transfersData = [

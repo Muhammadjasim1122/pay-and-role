@@ -7,6 +7,7 @@ import Sidebar from './Sidebar';
 import { DashboardProvider } from '../../contexts/DashboardContext';
 import { EmployeeProvider } from '../../contexts/EmployeeContext';
 import { LeaveApplicationProvider } from '../../contexts/LeaveApplicationContext';
+import { RecruitmentProvider } from '../../contexts/RecruitmentContext';
 import HR from '../main/hr/hr';
 import HRDashboard from '../main/hr/hr-dashboard';
 import HRDashboardForm from '../main/hr/hr-dashboard-form';
@@ -48,6 +49,24 @@ import AttendanceDetails from '../main/hr/attendance-details';
 import ExpenseClaimsDashboard from '../main/hr/expense-claims-dashboard';
 import ExpenseClaimsDashboardForm from '../main/hr/expense-claims-dashboard-form';
 import ExpenseClaimsDetails from '../main/hr/expense-claims-details';
+import JobOpening from '../main/hr/job-opening';
+import JobApplicant from '../main/hr/job-applicant';
+import JobOffer from '../main/hr/job-offer';
+import JobOpeningForm from '../main/hr/job-opening-form';
+import JobApplicantForm from '../main/hr/job-applicant-form';
+import JobOfferForm from '../main/hr/job-offer-form';
+import EmployeeOnboarding from '../main/hr/employee-onboarding';
+import EmployeeOnboardingForm from '../main/hr/employee-onboarding-form';
+import EmployeeSeparation from '../main/hr/employee-separation';
+import EmployeeSeparationForm from '../main/hr/employee-separation-form';
+import EmployeeGrievance from '../main/hr/employee-grievance';
+import EmployeeGrievanceForm from '../main/hr/employee-grievance-form';
+import Appraisal from '../main/hr/appraisal';
+import AppraisalForm from '../main/hr/appraisal-form';
+import PerformanceFeedback from '../main/hr/performance-feedback';
+import PerformanceFeedbackForm from '../main/hr/performance-feedback-form';
+import Goal from '../main/hr/goal';
+import GoalForm from '../main/hr/goal-form';
 
 export default function Layout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -203,6 +222,42 @@ export default function Layout({ children }) {
     } else if (activeContent === 'expense-claims-details') {
       // Update browser title
       document.title = 'Expense Claims Details - HRM App';
+    } else if (activeContent === 'job-opening') {
+      // Update browser title
+      document.title = 'Job Opening - HRM App';
+    } else if (activeContent === 'job-applicant') {
+      // Update browser title
+      document.title = 'Job Applicant - HRM App';
+    } else if (activeContent === 'job-offer') {
+      // Update browser title
+      document.title = 'Job Offer - HRM App';
+    } else if (activeContent === 'job-opening-form') {
+      // Update browser title
+      document.title = 'New Job Opening - HRM App';
+    } else if (activeContent === 'job-applicant-form') {
+      // Update browser title
+      document.title = 'Add Job Applicant - HRM App';
+    } else if (activeContent === 'job-offer-form') {
+      // Update browser title
+      document.title = 'Send Job Offer - HRM App';
+    } else if (activeContent === 'appraisal') {
+      // Update browser title
+      document.title = 'Appraisal - HRM App';
+    } else if (activeContent === 'appraisal-form') {
+      // Update browser title
+      document.title = 'New Appraisal - HRM App';
+    } else if (activeContent === 'performance-feedback') {
+      // Update browser title
+      document.title = 'Employee Performance Feedback - HRM App';
+    } else if (activeContent === 'performance-feedback-form') {
+      // Update browser title
+      document.title = 'New Performance Feedback - HRM App';
+    } else if (activeContent === 'goal') {
+      // Update browser title
+      document.title = 'Goal - HRM App';
+    } else if (activeContent === 'goal-form') {
+      // Update browser title
+      document.title = 'New Goal - HRM App';
     } else {
       // Reset to default
       document.title = 'HRM App';
@@ -292,6 +347,30 @@ export default function Layout({ children }) {
         setActiveContent('expense-claims-dashboard-form');
       } else if (event.state?.activeContent === 'expense-claims-details') {
         setActiveContent('expense-claims-details');
+      } else if (event.state?.activeContent === 'job-opening') {
+        setActiveContent('job-opening');
+      } else if (event.state?.activeContent === 'job-applicant') {
+        setActiveContent('job-applicant');
+      } else if (event.state?.activeContent === 'job-offer') {
+        setActiveContent('job-offer');
+      } else if (event.state?.activeContent === 'job-opening-form') {
+        setActiveContent('job-opening-form');
+      } else if (event.state?.activeContent === 'job-applicant-form') {
+        setActiveContent('job-applicant-form');
+      } else if (event.state?.activeContent === 'job-offer-form') {
+        setActiveContent('job-offer-form');
+      } else if (event.state?.activeContent === 'appraisal') {
+        setActiveContent('appraisal');
+      } else if (event.state?.activeContent === 'appraisal-form') {
+        setActiveContent('appraisal-form');
+      } else if (event.state?.activeContent === 'performance-feedback') {
+        setActiveContent('performance-feedback');
+      } else if (event.state?.activeContent === 'performance-feedback-form') {
+        setActiveContent('performance-feedback-form');
+      } else if (event.state?.activeContent === 'goal') {
+        setActiveContent('goal');
+      } else if (event.state?.activeContent === 'goal-form') {
+        setActiveContent('goal-form');
       } else {
         setActiveContent('default');
       }
@@ -314,6 +393,7 @@ export default function Layout({ children }) {
     <DashboardProvider>
       <EmployeeProvider>
         <LeaveApplicationProvider>
+          <RecruitmentProvider>
         <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
         {/* Header */}
         <Header 
@@ -336,7 +416,8 @@ export default function Layout({ children }) {
               <Sidebar 
                 isOpen={isSidebarOpen} 
                 setIsOpen={setIsSidebarOpen} 
-                setActiveContent={setActiveContent} 
+                setActiveContent={setActiveContent}
+                activeContent={activeContent}
               /> 
             )}
           </>
@@ -348,13 +429,14 @@ export default function Layout({ children }) {
           className="flex-1 overflow-auto"
         >
           {activeContent === 'hr' ? <HR /> : activeContent === 'hr-dashboard' ? <HRDashboard /> : activeContent === 'dashboard-form' ? <HRDashboardForm dashboardType="hr" isSidebarOpen={isSidebarOpen} /> : activeContent === 'recruitment-dashboard-form' ? <HRDashboardForm dashboardType="recruitment" isSidebarOpen={isSidebarOpen} /> : activeContent === 'dashboard-details' ? <DashboardDetails /> : activeContent === 'recruitment-dashboard' ? <RecruitmentDashboard /> : activeContent === 'recruitment-details' ? <RecruitmentDetails /> : activeContent === 'recruitment' ? <Recruitment /> : activeContent === 'lifecycle' ? <Lifecycle /> 
-          : activeContent === 'performance' ? <Performance /> : activeContent === 'shift-attendance' ? <ShiftAttendance /> : activeContent === 'expense-claims' ? <ExpenseClaims /> : activeContent === 'leaves' ? <Leaves /> : activeContent === 'projects' ? <Projects /> : activeContent === 'users' ? <Users /> : activeContent === 'website' ? <Website /> : activeContent === 'payroll' ? <Payroll /> : activeContent === 'salary-payout' ? <SalaryPayout /> : activeContent === 'tax-and-payout' ? <TaxAndPayout /> : activeContent === 'tools' ? <Tools /> 
+          : activeContent === 'performance' ? <Performance /> : activeContent === 'appraisal' ? <Appraisal /> : activeContent === 'appraisal-form' ? <AppraisalForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('appraisal-edit-') ? <AppraisalForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('appraisal-edit-', '')} /> : activeContent === 'performance-feedback' ? <PerformanceFeedback /> : activeContent === 'performance-feedback-form' ? <PerformanceFeedbackForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('performance-feedback-edit-') ? <PerformanceFeedbackForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('performance-feedback-edit-', '')} /> : activeContent === 'goal' ? <Goal /> : activeContent === 'goal-form' ? <GoalForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('goal-edit-') ? <GoalForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('goal-edit-', '')} /> : activeContent === 'shift-attendance' ? <ShiftAttendance /> : activeContent === 'expense-claims' ? <ExpenseClaims /> : activeContent === 'leaves' ? <Leaves /> : activeContent === 'projects' ? <Projects /> : activeContent === 'users' ? <Users /> : activeContent === 'website' ? <Website /> : activeContent === 'payroll' ? <Payroll /> : activeContent === 'salary-payout' ? <SalaryPayout /> : activeContent === 'tax-and-payout' ? <TaxAndPayout /> : activeContent === 'tools' ? <Tools /> 
           : activeContent === 'erpnext-settings' ? <ERPNext /> : activeContent === 'integrations' ? <Integrations /> 
            : activeContent === 'erpnext-integrations' ? <ERPNextIntegrations /> : activeContent === 'build' ? <Build />
-            : activeContent === 'hr-settings' ? <HRSettings /> : activeContent === 'holiday-list' ? <HolidayList /> : activeContent === 'employee-list' ? <EmployeeList /> : activeContent === 'employee' ? <Employee /> : activeContent === 'leave-type' ? <LeaveType /> : activeContent === 'leave-allocation' ? <LeaveAllocation /> : activeContent === 'leave-application' ? <LeaveApplication isSidebarOpen={isSidebarOpen} /> : activeContent === 'leave-application-list' ? <LeaveApplicationList /> : activeContent === 'lifecycle-dashboard' ? <LifecycleDashboard /> : activeContent === 'lifecycle-dashboard-form' ? <LifecycleDashboardForm dashboardType="lifecycle" isSidebarOpen={isSidebarOpen} /> : activeContent === 'lifecycle-details' ? <LifecycleDetails /> : activeContent === 'attendance-dashboard' ? <AttendanceDashboard /> : activeContent === 'attendance-dashboard-form' ? <AttendanceDashboardForm dashboardType="attendance" isSidebarOpen={isSidebarOpen} /> : activeContent === 'attendance-details' ? <AttendanceDetails /> : activeContent === 'expense-claims-dashboard' ? <ExpenseClaimsDashboard /> : activeContent === 'expense-claims-dashboard-form' ? <ExpenseClaimsDashboardForm dashboardType="expense-claims" isSidebarOpen={isSidebarOpen} /> : activeContent === 'expense-claims-details' ? <ExpenseClaimsDetails /> : children}
+            : activeContent === 'hr-settings' ? <HRSettings /> : activeContent === 'holiday-list' ? <HolidayList /> : activeContent === 'employee-list' ? <EmployeeList /> : activeContent === 'employee' ? <Employee /> : activeContent === 'leave-type' ? <LeaveType /> : activeContent === 'leave-allocation' ? <LeaveAllocation /> : activeContent === 'leave-application' ? <LeaveApplication isSidebarOpen={isSidebarOpen} /> : activeContent === 'leave-application-list' ? <LeaveApplicationList /> : activeContent === 'lifecycle-dashboard' ? <LifecycleDashboard /> : activeContent === 'lifecycle-dashboard-form' ? <LifecycleDashboardForm dashboardType="lifecycle" isSidebarOpen={isSidebarOpen} /> : activeContent === 'lifecycle-details' ? <LifecycleDetails /> : activeContent === 'attendance-dashboard' ? <AttendanceDashboard /> : activeContent === 'attendance-dashboard-form' ? <AttendanceDashboardForm dashboardType="attendance" isSidebarOpen={isSidebarOpen} /> : activeContent === 'attendance-details' ? <AttendanceDetails /> : activeContent === 'expense-claims-dashboard' ? <ExpenseClaimsDashboard /> : activeContent === 'expense-claims-dashboard-form' ? <ExpenseClaimsDashboardForm dashboardType="expense-claims" isSidebarOpen={isSidebarOpen} /> : activeContent === 'expense-claims-details' ? <ExpenseClaimsDetails /> : activeContent === 'job-opening' ? <JobOpening /> : activeContent === 'job-applicant' ? <JobApplicant /> : activeContent === 'job-offer' ? <JobOffer /> : activeContent === 'job-opening-form' ? <JobOpeningForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('job-opening-edit-') ? <JobOpeningForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('job-opening-edit-', '')} /> : activeContent === 'job-applicant-form' ? <JobApplicantForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('job-applicant-edit-') ? <JobApplicantForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('job-applicant-edit-', '')} /> : activeContent === 'job-offer-form' ? <JobOfferForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('job-offer-edit-') ? <JobOfferForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('job-offer-edit-', '')} /> : activeContent === 'employee-onboarding' ? <EmployeeOnboarding /> : activeContent === 'employee-onboarding-form' ? <EmployeeOnboardingForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('employee-onboarding-edit-') ? <EmployeeOnboardingForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('employee-onboarding-edit-', '')} /> : activeContent === 'employee-separation' ? <EmployeeSeparation /> : activeContent === 'employee-separation-form' ? <EmployeeSeparationForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('employee-separation-edit-') ? <EmployeeSeparationForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('employee-separation-edit-', '')} /> : activeContent === 'employee-grievance' ? <EmployeeGrievance /> : activeContent === 'employee-grievance-form' ? <EmployeeGrievanceForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('employee-grievance-edit-') ? <EmployeeGrievanceForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('employee-grievance-edit-', '')} /> : children}
         </main>
       </div>
         </div>
+          </RecruitmentProvider>
         </LeaveApplicationProvider>
       </EmployeeProvider>
     </DashboardProvider>

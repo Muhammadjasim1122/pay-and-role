@@ -1,50 +1,81 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { MoreHorizontal } from 'lucide-react';
-import { useDashboard } from '../../../contexts/DashboardContext';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useRecruitment } from '../../../contexts/RecruitmentContext';
 
 export default function RecruitmentDetails() {
-  const { recruitmentDashboards } = useDashboard();
+  const { jobOpenings, jobApplicants, jobOffers } = useRecruitment();
 
-  // Get the most recent recruitment dashboard for dynamic data
-  const latestDashboard = recruitmentDashboards.length > 0 ? recruitmentDashboards[0] : null;
-
-  // Calculate dynamic stats based on saved dashboard data
-  const getDynamicStats = () => {
-    const baseStats = [
-      { title: 'JOB OPENINGS', value: '0', color: 'text-gray-900' },
-      { title: 'TOTAL APPLICANTS (THIS MONTH)', value: '0', color: 'text-gray-900' },
-      { title: 'ACCEPTED JOB APPLICANTS', value: '0', color: 'text-green-600' },
-      { title: 'REJECTED JOB APPLICANTS', value: '0', color: 'text-red-600' },
-      { title: 'JOB OFFERS (THIS MONTH)', value: '0', color: 'text-gray-900' },
-      { title: 'APPLICANT-TO-HIRE PERCENTAGE', value: '0.000%', color: 'text-gray-900' },
-      { title: 'JOB OFFER ACCEPTANCE RATE', value: '0.000%', color: 'text-gray-900' },
-      { title: 'TIME TO FILL', value: '0', color: 'text-gray-900' },
-    ];
-
-    if (latestDashboard && latestDashboard.cards && latestDashboard.cards.length > 0) {
-      // Update stats based on saved cards data
-      const cardCount = latestDashboard.cards.length;
-      const chartCount = latestDashboard.charts ? latestDashboard.charts.length : 0;
-      
-      return baseStats.map((stat, index) => {
-        if (index === 0) return { ...stat, value: cardCount.toString() };
-        if (index === 1) return { ...stat, value: chartCount.toString() };
-        if (index === 2) return { ...stat, value: (cardCount * 2).toString() };
-        if (index === 3) return { ...stat, value: (cardCount * 0.5).toString() };
-        if (index === 4) return { ...stat, value: (chartCount * 3).toString() };
-        if (index === 5) return { ...stat, value: `${(cardCount * 15).toFixed(3)}%` };
-        if (index === 6) return { ...stat, value: `${(chartCount * 8).toFixed(3)}%` };
-        if (index === 7) return { ...stat, value: (cardCount + chartCount).toString() };
-        return stat;
-      });
+  // Calculate application frequency data for the chart
+  const chartData = useMemo(() => {
+    const months = [];
+    const last12Months = [];
+    
+    // Generate last 12 months
+    for (let i = 11; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      const monthName = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      last12Months.push(monthName);
     }
+    
+    // Count applications per month
+    last12Months.forEach(month => {
+      const count = jobApplicants.filter(applicant => {
+        const applicantDate = new Date(applicant.date);
+        const applicantMonth = applicantDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        return applicantMonth === month;
+      }).length;
+      
+      months.push({ month, applications: count });
+    });
+    
+    return months;
+  }, [jobApplicants]);
 
-    return baseStats;
-  };
+  // Calculate dynamic stats from actual recruitment data
+  const stats = useMemo(() => {
+    const totalJobOpenings = jobOpenings.length;
+    const activeJobOpenings = jobOpenings.filter(job => job.status === 'Active').length;
+    
+    const thisMonth = new Date().getMonth();
+    const thisYear = new Date().getFullYear();
+    
+    const thisMonthApplicants = jobApplicants.filter(applicant => {
+      const applicantDate = new Date(applicant.date);
+      return applicantDate.getMonth() === thisMonth && applicantDate.getFullYear() === thisYear;
+    }).length;
+    
+    const acceptedApplicants = jobApplicants.filter(applicant => applicant.status === 'Hired').length;
+    const rejectedApplicants = jobApplicants.filter(applicant => applicant.status === 'Rejected').length;
+    
+    const thisMonthOffers = jobOffers.filter(offer => {
+      const offerDate = new Date(offer.offerDate);
+      return offerDate.getMonth() === thisMonth && offerDate.getFullYear() === thisYear;
+    }).length;
+    
+    const acceptedOffers = jobOffers.filter(offer => offer.status === 'Accepted').length;
+    const totalOffers = jobOffers.length;
+    
+    const acceptanceRate = totalOffers > 0 ? ((acceptedOffers / totalOffers) * 100).toFixed(3) : '0.000';
+    
+    const applicantToHireRate = jobApplicants.length > 0 
+      ? ((acceptedApplicants / jobApplicants.length) * 100).toFixed(3) 
+      : '0.000';
 
-  const stats = getDynamicStats();
+    return [
+      { title: 'JOB OPENINGS', value: activeJobOpenings.toString(), color: 'text-gray-900' },
+      { title: 'TOTAL APPLICANTS (THIS MONTH)', value: thisMonthApplicants.toString(), color: 'text-gray-900' },
+      { title: 'ACCEPTED JOB APPLICANTS', value: acceptedApplicants.toString(), color: 'text-green-600' },
+      { title: 'REJECTED JOB APPLICANTS', value: rejectedApplicants.toString(), color: 'text-red-600' },
+      { title: 'JOB OFFERS (THIS MONTH)', value: thisMonthOffers.toString(), color: 'text-gray-900' },
+      { title: 'APPLICANT-TO-HIRE PERCENTAGE', value: `${applicantToHireRate}%`, color: 'text-gray-900' },
+      { title: 'JOB OFFER ACCEPTANCE RATE', value: `${acceptanceRate}%`, color: 'text-gray-900' },
+      { title: 'TOTAL JOB OPENINGS', value: totalJobOpenings.toString(), color: 'text-gray-900' },
+    ];
+  }, [jobOpenings, jobApplicants, jobOffers]);
 
   return (
     <div className="p-10 bg-gray-50 min-h-full">
@@ -262,47 +293,39 @@ export default function RecruitmentDetails() {
             </div>
             
             {/* Chart Area */}
-            <div className="relative h-64 bg-white">
-              {/* Y-axis labels */}
-              <div className="absolute left-0 top-0 h-full flex flex-col justify-between py-4">
-                {[5, 4, 3, 2, 1, 0].map((value) => (
-                  <span key={value} className="text-xs text-gray-500 font-medium">
-                    {value}
-                  </span>
-                ))}
-              </div>
-              
-              {/* Grid lines */}
-              <div className="absolute left-12 right-4 top-0 h-full">
-                {[0, 1, 2, 3, 4, 5].map((value) => (
-                  <div 
-                    key={value}
-                    className="absolute w-full border-t border-gray-100"
-                    style={{ top: `${(value / 5) * 100}%` }}
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis 
+                    dataKey="month" 
+                    tick={{ fontSize: 10, fill: '#6b7280' }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
                   />
-                ))}
-              </div>
-              
-              {/* Line chart placeholder */}
-              <div className="absolute left-12 right-4 top-0 bottom-12 flex items-end">
-                <svg className="w-full h-full" viewBox="0 0 1000 200">
-                  <polyline
-                    fill="none"
-                    stroke="#F9A8D4"
-                    strokeWidth="2"
-                    points="0,200 100,200 200,200 300,200 400,200 500,200 600,200 700,200 800,200 900,200 1000,200"
+                  <YAxis 
+                    tick={{ fontSize: 10, fill: '#6b7280' }}
+                    domain={[0, 'auto']}
                   />
-                </svg>
-              </div>
-              
-              {/* X-axis labels */}
-              <div className="absolute left-12 right-4 bottom-0 flex justify-between">
-                {['Oct 2024', 'Nov 2024', 'Dec 2024', 'Jan 2025', 'Feb 2025', 'Mar 2025', 'Apr 2025', 'May 2025', 'Jun 2025', 'Jul 2025', 'Aug 2025', 'Sep 2025', 'Oct 2025'].map((month) => (
-                  <span key={month} className="text-[10px] text-gray-500 font-medium">
-                    {month}
-                  </span>
-                ))}
-              </div>
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'white', 
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      fontSize: '12px'
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="applications" 
+                    stroke="#F9A8D4" 
+                    strokeWidth={2}
+                    dot={{ fill: '#F9A8D4', r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>

@@ -282,6 +282,102 @@ export default function Header({ isSidebarOpen, setIsSidebarOpen, activeContent 
                 <span className="text-sm font-medium text-gray-900">Expense Claims Details</span>
               </div>
             )}
+            
+            {activeContent === 'job-opening' && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-900">Job Opening</span>
+              </div>
+            )}
+            
+            {activeContent === 'job-applicant' && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-900">Job Applicant</span>
+              </div>
+            )}
+            
+            {activeContent === 'job-offer' && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-900">Job Offer</span>
+              </div>
+            )}
+            
+            {activeContent === 'job-opening-form' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    const event = new CustomEvent('setActiveContent', { detail: 'job-opening' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900"
+                >
+                  Job Opening
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">New Job Opening</span>
+              </div>
+            )}
+            
+            {activeContent === 'job-applicant-form' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    const event = new CustomEvent('setActiveContent', { detail: 'job-applicant' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900"
+                >
+                  Job Applicant
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">Add Job Applicant</span>
+              </div>
+            )}
+            
+            {activeContent === 'job-offer-form' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    const event = new CustomEvent('setActiveContent', { detail: 'job-offer' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900"
+                >
+                  Job Offer
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">Send Job Offer</span>
+              </div>
+            )}
+            
+            {(activeContent === 'employee-onboarding' || activeContent === 'employee-onboarding-form' || activeContent?.startsWith('employee-onboarding-edit-')) && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-900">Employee Onboarding</span>
+              </div>
+            )}
+            
+            {activeContent === 'employee-onboarding-form' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    const event = new CustomEvent('setActiveContent', { detail: 'employee-onboarding' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900"
+                >
+                  Employee Onboarding
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">New Employee Onboarding</span>
+              </div>
+            )}
           </div>
 
           {/* Center - Search Bar */}
@@ -357,7 +453,7 @@ export default function Header({ isSidebarOpen, setIsSidebarOpen, activeContent 
               <MenuIcon className="h-5 w-5" />
               </button>
               <h1 className="text-xl font-bold text-gray-900">
-                {activeContent === 'hr' ? 'HR' : activeContent === 'hr-dashboard' ? 'HR Dashboard' : activeContent === 'dashboard-form' ? 'New Dashboard' : activeContent === 'recruitment-dashboard-form' ? 'New Recruitment Dashboard' : activeContent === 'dashboard-details' ? 'Dashboard Details' : activeContent === 'recruitment-dashboard' ? 'Recruitment Dashboard' : activeContent === 'recruitment-details' ? 'Recruitment Details' : activeContent === 'recruitment' ? 'Recruitment' : activeContent === 'lifecycle' ? 'Lifecycle' : activeContent === 'lifecycle-dashboard' ? 'Employee Lifecycle Dashboard' : activeContent === 'lifecycle-dashboard-form' ? 'New Lifecycle Dashboard' : activeContent === 'lifecycle-details' ? 'Employee Lifecycle Details' : activeContent === 'attendance-dashboard' ? 'Attendance Dashboard' : activeContent === 'attendance-dashboard-form' ? 'New Attendance Dashboard' : activeContent === 'attendance-details' ? 'Attendance Details' : activeContent === 'expense-claims-dashboard' ? 'Expense Claims Dashboard' : activeContent === 'expense-claims-dashboard-form' ? 'New Expense Claims Dashboard' : activeContent === 'expense-claims-details' ? 'Expense Claims Details' : activeContent === 'performance' ? 'Performance' : activeContent === 'shift-attendance' ? 'Shift & Attendance' : activeContent === 'expense-claims' ? 'Expense Claims' : activeContent === 'leaves' ? 'Leaves' : activeContent === 'projects' ? 'Projects' : activeContent === 'users' ? 'Users' : activeContent === 'website' ? 'Website' : activeContent === 'payroll' ? 'Payroll' : activeContent === 'salary-payout' ? 'Salary Payout' : activeContent === 'tax-and-payout' ? 'Tax & Payout' : activeContent === 'tools' ? 'Tools' : activeContent === 'erpnext-settings' ? 'ERPNext Settings' : activeContent === 'integrations' ? 'Integrations' : activeContent === 'erpnext-integrations' ? 'ERPNext Integrations' : activeContent === 'build' ? 'Build' : activeContent === 'hr-settings' ? 'HR Settings' : activeContent === 'holiday-list' ? 'Holiday List' : activeContent === 'employee-list' ? 'Employee' : activeContent === 'employee' ? 'New Employee' : activeContent === 'leave-type' ? 'New Leave Type' : activeContent === 'leave-allocation' ? 'New Leave Allocation' : activeContent === 'leave-application' ? 'New Leave Application' : activeContent === 'leave-application-list' ? 'Leave Applications' : 'Payables'}
+                {activeContent === 'hr' ? 'HR' : activeContent === 'hr-dashboard' ? 'HR Dashboard' : activeContent === 'dashboard-form' ? 'New Dashboard' : activeContent === 'recruitment-dashboard-form' ? 'New Recruitment Dashboard' : activeContent === 'dashboard-details' ? 'Dashboard Details' : activeContent === 'recruitment-dashboard' ? 'Recruitment Dashboard' : activeContent === 'recruitment-details' ? 'Recruitment Details' : activeContent === 'recruitment' ? 'Recruitment' : activeContent === 'lifecycle' ? 'Lifecycle' : activeContent === 'lifecycle-dashboard' ? 'Employee Lifecycle Dashboard' : activeContent === 'lifecycle-dashboard-form' ? 'New Lifecycle Dashboard' : activeContent === 'lifecycle-details' ? 'Employee Lifecycle Details' : activeContent === 'attendance-dashboard' ? 'Attendance Dashboard' : activeContent === 'attendance-dashboard-form' ? 'New Attendance Dashboard' : activeContent === 'attendance-details' ? 'Attendance Details' : activeContent === 'expense-claims-dashboard' ? 'Expense Claims Dashboard' : activeContent === 'expense-claims-dashboard-form' ? 'New Expense Claims Dashboard' : activeContent === 'expense-claims-details' ? 'Expense Claims Details' : activeContent === 'job-opening' ? 'Job Opening' : activeContent === 'job-applicant' ? 'Job Applicant' : activeContent === 'job-offer' ? 'Job Offer' : activeContent === 'job-opening-form' ? 'New Job Opening' : activeContent === 'job-applicant-form' ? 'Add Job Applicant' : activeContent === 'job-offer-form' ? 'Send Job Offer' : activeContent === 'employee-onboarding' ? 'Employee Onboarding' : activeContent === 'employee-onboarding-form' ? 'New Employee Onboarding' : activeContent?.startsWith('employee-onboarding-edit-') ? 'Edit Employee Onboarding' : activeContent === 'employee-separation' ? 'Employee Separation' : activeContent === 'employee-separation-form' ? 'New Employee Separation' : activeContent?.startsWith('employee-separation-edit-') ? 'Edit Employee Separation' : activeContent === 'employee-grievance' ? 'Employee Grievance' : activeContent === 'employee-grievance-form' ? 'New Employee Grievance' : activeContent?.startsWith('employee-grievance-edit-') ? 'Edit Employee Grievance' : activeContent === 'performance' ? 'Performance' : activeContent === 'appraisal' ? 'Appraisal' : activeContent === 'appraisal-form' ? 'New Appraisal' : activeContent?.startsWith('appraisal-edit-') ? 'Edit Appraisal' : activeContent === 'performance-feedback' ? 'Employee Performance Feedback' : activeContent === 'performance-feedback-form' ? 'New Performance Feedback' : activeContent?.startsWith('performance-feedback-edit-') ? 'Edit Performance Feedback' : activeContent === 'goal' ? 'Goal' : activeContent === 'goal-form' ? 'New Goal' : activeContent?.startsWith('goal-edit-') ? 'Edit Goal' : activeContent === 'shift-attendance' ? 'Shift & Attendance' : activeContent === 'expense-claims' ? 'Expense Claims' : activeContent === 'leaves' ? 'Leaves' : activeContent === 'projects' ? 'Projects' : activeContent === 'users' ? 'Users' : activeContent === 'website' ? 'Website' : activeContent === 'payroll' ? 'Payroll' : activeContent === 'salary-payout' ? 'Salary Payout' : activeContent === 'tax-and-payout' ? 'Tax & Payout' : activeContent === 'tools' ? 'Tools' : activeContent === 'erpnext-settings' ? 'ERPNext Settings' : activeContent === 'integrations' ? 'Integrations' : activeContent === 'erpnext-integrations' ? 'ERPNext Integrations' : activeContent === 'build' ? 'Build' : activeContent === 'hr-settings' ? 'HR Settings' : activeContent === 'holiday-list' ? 'Holiday List' : activeContent === 'employee-list' ? 'Employee' : activeContent === 'employee' ? 'New Employee' : activeContent === 'leave-type' ? 'New Leave Type' : activeContent === 'leave-allocation' ? 'New Leave Allocation' : activeContent === 'leave-application' ? 'New Leave Application' : activeContent === 'leave-application-list' ? 'Leave Applications' : 'Payables'}
               </h1>
             </div>
             
