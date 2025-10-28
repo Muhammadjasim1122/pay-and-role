@@ -1,42 +1,73 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { useDashboard } from '../../../contexts/DashboardContext';
 
 export default function AttendanceDetails() {
   const { attendanceDashboards } = useDashboard();
 
-  // Get the most recent attendance dashboard for dynamic data
-  const latestDashboard = attendanceDashboards.length > 0 ? attendanceDashboards[0] : null;
+  // Stats derived from attendance list data in localStorage
+  const [stats, setStats] = useState([
+    { title: 'TOTAL PRESENT (THIS MONTH)', value: '0', color: 'text-green-600' },
+    { title: 'TOTAL ABSENT (THIS MONTH)', value: '0', color: 'text-red-600' },
+    { title: 'LATE ENTRY (THIS MONTH)', value: '0', color: 'text-red-600' },
+    { title: 'EARLY EXIT (THIS MONTH)', value: '0', color: 'text-red-600' },
+  ]);
 
-  // Calculate dynamic stats based on saved cards data
-  const getDynamicStats = () => {
-    const baseStats = [
-      { title: 'TOTAL PRESENT (THIS MONTH)', value: '0', color: 'text-green-600' },
-      { title: 'TOTAL ABSENT (THIS MONTH)', value: '0', color: 'text-red-600' },
-      { title: 'LATE ENTRY (THIS MONTH)', value: '0', color: 'text-red-600' },
-      { title: 'EARLY EXIT (THIS MONTH)', value: '0', color: 'text-red-600' },
-    ];
-
-    if (latestDashboard && latestDashboard.cards && latestDashboard.cards.length > 0) {
-      // Update stats based on saved cards data
-      const cardCount = latestDashboard.cards.length;
-      const chartCount = latestDashboard.charts ? latestDashboard.charts.length : 0;
-      
-      return baseStats.map((stat, index) => {
-        if (index === 0) return { ...stat, value: cardCount.toString() };
-        if (index === 1) return { ...stat, value: chartCount.toString() };
-        if (index === 2) return { ...stat, value: (cardCount * 0.5).toString() };
-        if (index === 3) return { ...stat, value: (chartCount * 0.3).toString() };
-        return stat;
-      });
-    }
-
-    return baseStats;
+  const isInCurrentMonth = (isoDateString) => {
+    if (!isoDateString) return false;
+    const d = new Date(isoDateString);
+    const now = new Date();
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   };
 
-  const stats = getDynamicStats();
+  const recomputeStats = () => {
+    // Fallback to dashboard context only if there is no attendance data at all
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('attendances') : null;
+    const attendances = saved ? JSON.parse(saved) : [];
+
+    if (attendances.length === 0) {
+      // Keep zeros when no attendance data; do not rely on dashboard cards for counts
+      setStats((prev) => prev.map((s) => ({ ...s, value: '0' })));
+      return;
+    }
+
+    const thisMonth = attendances.filter((a) => isInCurrentMonth(a.attendanceDate));
+    const present = thisMonth.filter((a) => (a.status || '').toLowerCase() === 'present').length;
+    const absent = thisMonth.filter((a) => (a.status || '').toLowerCase() === 'absent').length;
+    const late = thisMonth.filter((a) => a.lateEntry === true || (a.status || '').toLowerCase() === 'late').length;
+    const early = thisMonth.filter((a) => a.earlyExit === true).length;
+
+    setStats([
+      { title: 'TOTAL PRESENT (THIS MONTH)', value: String(present), color: 'text-green-600' },
+      { title: 'TOTAL ABSENT (THIS MONTH)', value: String(absent), color: 'text-red-600' },
+      { title: 'LATE ENTRY (THIS MONTH)', value: String(late), color: 'text-red-600' },
+      { title: 'EARLY EXIT (THIS MONTH)', value: String(early), color: 'text-red-600' },
+    ]);
+  };
+
+  useEffect(() => {
+    // Initial calculation
+    recomputeStats();
+
+    // Recompute when other tabs/windows modify localStorage
+    const handleStorage = (e) => {
+      if (e.key === 'attendances') {
+        recomputeStats();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    // Listen to custom events fired by list/form pages after changes
+    const handleCustom = () => recomputeStats();
+    window.addEventListener('attendanceDataChanged', handleCustom);
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('attendanceDataChanged', handleCustom);
+    };
+  }, [attendanceDashboards]);
 
   return (
     <div className="p-10 bg-gray-50 min-h-full">

@@ -32,13 +32,17 @@ export default function Sidebar({ isOpen, setIsOpen, setActiveContent, activeCon
     hr: true,
     recruitment: true,
     lifecycle: false,
-    performance: false
+    performance: false,
+    attendance: false
   });
   
-  // Helper function to check if a content item is active
+  // Helper: active when exact match OR when navigating to that item's form/edit
   const isContentActive = (contentId) => {
     if (!activeContent) return false;
-    return activeContent === contentId || activeContent?.startsWith(`${contentId}-`);
+    if (activeContent === contentId) return true;
+    // Only treat as active for common form/edit routes of the same base id
+    const formLikePrefixes = ['-form', '-edit-'];
+    return formLikePrefixes.some((suffix) => activeContent.startsWith(`${contentId}${suffix}`));
   };
 
   // Add smooth transitions for color changes
@@ -81,13 +85,6 @@ export default function Sidebar({ isOpen, setIsOpen, setActiveContent, activeCon
   };
 
   const menuItems = [
-    {
-      id: 'public',
-      title: 'PUBLIC',
-      icon: null,
-      isSection: true,
-      // children are rendered custom to allow HR nested list like in screenshots
-    },
     {
       id: 'payroll',
       title: 'Payroll',
@@ -135,20 +132,8 @@ export default function Sidebar({ isOpen, setIsOpen, setActiveContent, activeCon
 
         {/* Menu Items */}
         <nav className="space-y-0">
-          {/* PUBLIC Section */}
-          <div>
-            <button
-              onClick={() => toggleSection('public')}
-              className="w-full flex items-center justify-between px-2 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200 ease-in-out"
-            >
-              <span className="flex items-center space-x-2">
-                <ChevronDown className={`h-4 w-4 transition-transform ${expandedSections.public ? 'rotate-180' : ''}`} />
-                <span className="text-[12px] text-black-500 uppercase tracking-wide">PUBLIC</span>
-              </span>
-            </button>
-
-            {expandedSections.public && (
-              <div className="mt-0 space-y-0">
+        {/* Root groups (no PUBLIC wrapper) */}
+        <div className="mt-0 space-y-0">
                 {/* HR (collapsible group) */}
                 <button
                   onClick={() => toggleSection('hr')}
@@ -208,37 +193,15 @@ export default function Sidebar({ isOpen, setIsOpen, setActiveContent, activeCon
                       <span>Leave Application</span>
                     </button>
                     <button 
-                      onClick={() => setActiveContent('attendance-dashboard')}
-                      className={`w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] transition-all duration-200 ease-in-out rounded-md ${
-                        isContentActive('attendance-dashboard')
-                          ? 'bg-gray-200 text-gray-800'
-                          : 'text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      {getIcon('clipboard', 14)}
-                      <span>Attendance Dashboard</span>
-                    </button>
-                    <button 
-                      onClick={() => setActiveContent('attendance-details')}
-                      className={`w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] transition-all duration-200 ease-in-out rounded-md ${
-                        isContentActive('attendance-details')
-                          ? 'bg-gray-200 text-gray-800'
-                          : 'text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      {getIcon('file-text', 14)}
-                      <span>Attendance Details</span>
-                    </button>
-                    <button 
                       onClick={() => setActiveContent('expense-claims-dashboard')}
-                      className={`w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] transition-all duration-200 ease-in-out rounded-md ${
+                      className={`w-full flex items-center space-x-2 px-3 py-1.5 text-[12px] transition-all duration-200 ease-in-out rounded-md ${
                         isContentActive('expense-claims-dashboard')
                           ? 'bg-gray-200 text-gray-800'
                           : 'text-gray-600 hover:bg-gray-50'
                       }`}
                     >
-                      {getIcon('shield', 14)}
-                      <span className="text-left">Expense Claims Dashboard</span>
+                      {getIcon('clipboard', 14)}
+                      <span>Expense Claims Dashboard</span>
                     </button>
                     <button 
                       onClick={() => setActiveContent('expense-claims-details')}
@@ -255,13 +218,13 @@ export default function Sidebar({ isOpen, setIsOpen, setActiveContent, activeCon
                 )}
 
                 {/* Recruitment (collapsible group) */}
-                <button
+                    <button 
                   onClick={() => toggleSection('recruitment')}
                   className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200 ease-in-out"
-                >
+                    >
                   <span className="flex items-center space-x-2">
-                    {getIcon('users')}
-                    <span>Recruitment</span>
+                      {getIcon('users')}
+                      <span>Recruitment</span>
                   </span>
                   <ChevronDown className={`h-4 w-4 transition-transform ${expandedSections.recruitment ? 'rotate-180' : ''}`} />
                 </button>
@@ -332,8 +295,8 @@ export default function Sidebar({ isOpen, setIsOpen, setActiveContent, activeCon
                   className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200 ease-in-out"
                 >
                   <span className="flex items-center space-x-2">
-                    {getIcon('briefcaseOutline')}
-                    <span>Employee Lifecycle</span>
+                      {getIcon('briefcaseOutline')}
+                      <span>Employee Lifecycle</span>
                   </span>
                   <ChevronDown className={`h-4 w-4 transition-transform ${expandedSections.lifecycle ? 'rotate-180' : ''}`} />
                 </button>
@@ -450,18 +413,81 @@ export default function Sidebar({ isOpen, setIsOpen, setActiveContent, activeCon
                   )}
                 </div>
 
-                {/* Other Siblings under PUBLIC */}
-                    <button 
-                      onClick={() => setActiveContent('shift-attendance')}
-                      className={`w-full flex items-center space-x-2 px-2 py-1 text-sm transition-all duration-200 ease-in-out rounded-lg ${
-                        activeContent === 'shift-attendance'
-                          ? 'bg-gray-200 text-gray-800'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
+                {/* Shift & Attendance (collapsible group) */}
+                <button
+                  onClick={() => toggleSection('attendance')}
+                  className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200 ease-in-out"
+                >
+                  <span className="flex items-center space-x-2">
                       {getIcon('clipboard')}
                       <span>Shift & Attendance</span>
+                  </span>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${expandedSections.attendance ? 'rotate-180' : ''}`} />
+                </button>
+
+                {expandedSections.attendance && (
+                  <div className="pl-6 space-y-1 mt-1">
+                    <button 
+                      onClick={() => setActiveContent('attendance-dashboard')}
+                      className={`w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] transition-all duration-200 ease-in-out rounded-md ${
+                        isContentActive('attendance-dashboard')
+                          ? 'bg-gray-200 text-gray-800'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {getIcon('pie-chart', 14)}
+                      <span>Attendance Dashboard</span>
                     </button>
+                    <button 
+                      onClick={() => setActiveContent('attendance-details')}
+                      className={`w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] transition-all duration-200 ease-in-out rounded-md ${
+                        isContentActive('attendance-details')
+                          ? 'bg-gray-200 text-gray-800'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {getIcon('file-text', 14)}
+                      <span>Attendance Details</span>
+                    </button>
+                    <button 
+                      onClick={() => setActiveContent('shift-schedule')}
+                      className={`w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] transition-all duration-200 ease-in-out rounded-md ${
+                        isContentActive('shift-schedule')
+                          ? 'bg-gray-200 text-gray-800'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {getIcon('clipboard', 14)}
+                      <span>Shift Schedule</span>
+                    </button>
+                    <button 
+                      onClick={() => setActiveContent('attendance')}
+                      className={`w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] transition-all duration-200 ease-in-out rounded-md ${
+                        isContentActive('attendance')
+                          ? 'bg-gray-200 text-gray-800'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {getIcon('clipboard', 14)}
+                      <span>Attendance</span>
+                    </button>
+                    <button 
+                      onClick={() => setActiveContent('shift-request')}
+                      className={`w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] transition-all duration-200 ease-in-out rounded-md ${
+                        isContentActive('shift-request')
+                          ? 'bg-gray-200 text-gray-800'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {getIcon('clipboard', 14)}
+                      <span>Shift Request</span>
+                    </button>
+                    {/* Shift Attendance removed per requirements */}
+                  </div>
+                )}
+
+              {/* Other Siblings under PUBLIC */}
+              <div>
                     <button 
                       onClick={() => setActiveContent('expense-claims')}
                       className={`w-full flex items-center space-x-2 px-2 py-1 text-sm transition-all duration-200 ease-in-out rounded-lg ${
@@ -470,7 +496,7 @@ export default function Sidebar({ isOpen, setIsOpen, setActiveContent, activeCon
                           : 'text-gray-700 hover:bg-gray-100'
                       }`}
                     >
-                      {getIcon('shield')}
+                      {getIcon('clipboard')}
                       <span>Expense Claims</span>
                     </button>
                     <button 
@@ -532,11 +558,11 @@ export default function Sidebar({ isOpen, setIsOpen, setActiveContent, activeCon
                   <span>Tools</span>
                 </button>
               </div>
-            )}
-          </div>
 
-          {expandedSections.public && (
-            <>
+            </div>
+
+            {/* Payroll Section outside the first div */}
+            <div>
               {/* PAYROLL Section */}
               <div>
                 <button
@@ -599,8 +625,7 @@ export default function Sidebar({ isOpen, setIsOpen, setActiveContent, activeCon
                     <span>{item.title}</span>
                   </a>
                 ))}
-            </>
-          )}
+            </div>
         </nav>
       </div>
     </aside>

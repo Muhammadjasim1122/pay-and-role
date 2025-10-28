@@ -9,6 +9,9 @@ export default function EmployeeGrievance() {
   const [openDropdown, setOpenDropdown] = useState(null);
   const [dropdownStyle, setDropdownStyle] = useState({});
   const [employeeGrievances, setEmployeeGrievances] = useState([]);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertAction, setAlertAction] = useState(null);
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -62,13 +65,15 @@ export default function EmployeeGrievance() {
   };
 
   const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this grievance?')) {
+    setOpenDropdown(null);
+    setAlertMessage('Are you sure you want to delete this grievance?');
+    setAlertAction(() => () => {
       const updatedGrievances = employeeGrievances.filter(item => item.id !== id);
       setEmployeeGrievances(updatedGrievances);
       localStorage.setItem('employeeGrievances', JSON.stringify(updatedGrievances));
-      setOpenDropdown(null);
-      alert('Grievance deleted successfully!');
-    }
+      setAlertOpen(false);
+    });
+    setAlertOpen(true);
   };
 
   const filteredGrievances = employeeGrievances.filter(grievance => {
@@ -272,6 +277,20 @@ export default function EmployeeGrievance() {
               </div>
             </div>
           </>
+        )}
+
+        {/* Custom Alert Modal */}
+        {alertOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-white rounded-lg shadow-lg border border-gray-200 w-full max-w-sm p-5">
+              <h3 className="text-base font-semibold text-gray-900 mb-2">Confirm Delete</h3>
+              <p className="text-sm text-gray-600 mb-5">{alertMessage}</p>
+              <div className="flex justify-end space-x-2">
+                <button onClick={() => setAlertOpen(false)} className="px-3 py-1.5 text-sm rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50">No</button>
+                <button onClick={() => { if (alertAction) alertAction(); }} className="px-3 py-1.5 text-sm rounded-md bg-red-600 text-white hover:bg-red-700">Yes, Delete</button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
