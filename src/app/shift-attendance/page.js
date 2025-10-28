@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
-import ShiftAttendance from '@/components/main/hr/shift-attendance';
+import AttendanceDashboard from '@/components/main/hr/attendance-dashboard';
 
 export default function ShiftAttendancePage() {
   return (
-    <ShiftAttendance />
+    <AttendanceDashboard />
   );
 }
