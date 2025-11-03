@@ -1,15 +1,73 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function ExpenseClaimsDetails() {
-  const stats = [
+  const [stats, setStats] = useState([
     { title: 'EXPENSE CLAIMS (THIS MONTH)', value: 0, color: 'text-gray-900' },
     { title: 'APPROVED CLAIMS (THIS MONTH)', value: 0, color: 'text-green-600' },
     { title: 'REJECTED CLAIMS (THIS MONTH)', value: 0, color: 'text-red-600' },
-  ];
+    { title: 'EMPLOYEE ADVANCES (THIS MONTH)', value: 0, color: 'text-blue-600' },
+  ]);
+
+  const isInCurrentMonth = (dateString) => {
+    if (!dateString) return false;
+    try {
+      const d = new Date(dateString);
+      const now = new Date();
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    } catch {
+      return false;
+    }
+  };
+
+  const recomputeStats = () => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('expenseClaims') : null;
+    const expenseClaims = saved ? JSON.parse(saved) : [];
+
+    const employeeAdvancesSaved = typeof window !== 'undefined' ? localStorage.getItem('employeeAdvances') : null;
+    const employeeAdvances = employeeAdvancesSaved ? JSON.parse(employeeAdvancesSaved) : [];
+
+    const thisMonthClaims = expenseClaims.filter((claim) => isInCurrentMonth(claim.postingDate));
+    const approved = thisMonthClaims.filter((claim) => (claim.status || '').toLowerCase() === 'approved').length;
+    const rejected = thisMonthClaims.filter((claim) => (claim.status || '').toLowerCase() === 'rejected').length;
+
+    const thisMonthAdvances = employeeAdvances.filter((advance) => isInCurrentMonth(advance.date));
+
+    setStats([
+      { title: 'EXPENSE CLAIMS (THIS MONTH)', value: thisMonthClaims.length, color: 'text-gray-900' },
+      { title: 'APPROVED CLAIMS (THIS MONTH)', value: approved, color: 'text-green-600' },
+      { title: 'REJECTED CLAIMS (THIS MONTH)', value: rejected, color: 'text-red-600' },
+      { title: 'EMPLOYEE ADVANCES (THIS MONTH)', value: thisMonthAdvances.length, color: 'text-blue-600' },
+    ]);
+  };
+
+  useEffect(() => {
+    // Initial calculation
+    recomputeStats();
+
+    // Recompute when other tabs/windows modify localStorage
+    const handleStorage = (e) => {
+      if (e.key === 'expenseClaims' || e.key === 'employeeAdvances') {
+        recomputeStats();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    // Listen to custom events fired by list/form pages after changes
+    const handleExpenseClaimChanged = () => recomputeStats();
+    const handleEmployeeAdvanceChanged = () => recomputeStats();
+    window.addEventListener('expenseClaimDataChanged', handleExpenseClaimChanged);
+    window.addEventListener('employeeAdvanceDataChanged', handleEmployeeAdvanceChanged);
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('expenseClaimDataChanged', handleExpenseClaimChanged);
+      window.removeEventListener('employeeAdvanceDataChanged', handleEmployeeAdvanceChanged);
+    };
+  }, []);
 
   // Sample data for the line chart (flat line at 0)
   const chartData = [
@@ -32,7 +90,7 @@ export default function ExpenseClaimsDetails() {
     <div className="p-10 bg-gray-50 min-h-full">
       <div className="max-w-7xl mx-auto">
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {stats.map((stat, index) => (
             <div
               key={index}

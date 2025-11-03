@@ -1,186 +1,295 @@
 'use client';
 
-import React from 'react';
-import { Filter, MoreHorizontal, ChevronDown, Calendar, Plus, Edit3 } from 'lucide-react';
-import ModuleSections from '../../shared/ModuleSections';
+import React, { useState, useEffect } from 'react';
+import { Search, Plus, Filter, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 
 export default function ExpenseClaims() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showFilter, setShowFilter] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const [dropdownStyle, setDropdownStyle] = useState({});
+  const [expenseClaims, setExpenseClaims] = useState([]);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertAction, setAlertAction] = useState(null);
 
-  // Chart data - all values are 0 to show flat line
-  const chartData = [
-    { month: 'Oct 2024', value: 0 },
-    { month: 'Nov 2024', value: 0 },
-    { month: 'Dec 2024', value: 0 },
-    { month: 'Jan 2025', value: 0 },
-    { month: 'Feb 2025', value: 0 },
-    { month: 'Mar 2025', value: 0 },
-    { month: 'Apr 2025', value: 0 },
-    { month: 'May 2025', value: 0 },
-    { month: 'Jun 2025', value: 0 },
-    { month: 'Jul 2025', value: 0 },
-    { month: 'Aug 2025', value: 0 },
-    { month: 'Sep 2025', value: 0 },
-    { month: 'Oct 2025', value: 0 },
-  ];
+  // Load data from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('expenseClaims');
+    if (saved) {
+      setExpenseClaims(JSON.parse(saved));
+    } else {
+      // Set default dummy data
+      const defaultData = [
+        { id: 'EC001', employee: 'John Smith', expenseType: 'Travel', amount: '500.00', status: 'Draft', postingDate: '2024-02-20' },
+        { id: 'EC002', employee: 'Sarah Johnson', expenseType: 'Meals', amount: '150.00', status: 'Submitted', postingDate: '2024-02-22' },
+        { id: 'EC003', employee: 'Michael Brown', expenseType: 'Office Supplies', amount: '300.00', status: 'Approved', postingDate: '2024-02-24' },
+      ];
+      setExpenseClaims(defaultData);
+      localStorage.setItem('expenseClaims', JSON.stringify(defaultData));
+    }
+  }, []);
 
-  // Expense Claims shortcuts data
-  const expenseClaimsShortcuts = [
-    { name: 'Expense Claim', extra: '0 Pending', link: '#' },
-    { name: 'Employee Advance', extra: '0 Unclaimed', link: '#' },
-    { name: 'Dashboard', link: '#' },
-  ];
+  // Listen for updates from localStorage changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem('expenseClaims');
+      if (saved) {
+        setExpenseClaims(JSON.parse(saved));
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also listen for custom events
+    const handleDataChange = () => {
+      const saved = localStorage.getItem('expenseClaims');
+      if (saved) {
+        setExpenseClaims(JSON.parse(saved));
+      }
+    };
+    
+    window.addEventListener('expenseClaimDataChanged', handleDataChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('expenseClaimDataChanged', handleDataChange);
+    };
+  }, []);
 
-  // Expense Claims reports and masters data
-  const expenseClaimsReportsAndMasters = [
-    {
-      category: 'Claims',
-      items: [
-        { name: 'Expense Claim', link: '#', hasArrow: true },
-        { name: 'Expense Claim Type', link: '#', hasArrow: true },
-      ],
-    },
-    {
-      category: 'Travel',
-      items: [
-        { name: 'Travel Request', link: '#', hasArrow: true },
-        { name: 'Purpose of Travel', link: '#', hasArrow: true },
-      ],
-    },
-    {
-      category: 'Advances',
-      items: [
-        { name: 'Employee Advance', link: '#', hasArrow: true },
-        { name: 'Payment Entry', link: '#', hasArrow: true },
-        { name: 'Journal Entry', link: '#', hasArrow: true },
-        { name: 'Additional Salary', link: '#', hasArrow: true },
-      ],
-    },
-    {
-      category: 'Reports',
-      items: [
-        { name: 'Employee Advance Summary', link: '#', hasArrow: true },
-        { name: 'Unpaid Expense Claim', link: '#', hasArrow: true },
-        { name: 'Vehicle Expenses', link: '#', hasArrow: true },
-      ],
-    },
-    {
-      category: 'Fleet Management',
-      items: [
-        { name: 'Vehicle', link: '#', hasArrow: true },
-        { name: 'Driver', link: '#', hasArrow: true },
-        { name: 'Vehicle Service Item', link: '#', hasArrow: true },
-        { name: 'Vehicle Log', link: '#', hasArrow: true },
-        { name: 'Vehicle Expenses', link: '#', hasArrow: true },
-      ],
-    },
-    {
-      category: 'Accounting Reports',
-      items: [
-        { name: 'Accounts Receivable', link: '#', hasArrow: true },
-        { name: 'Accounts Payable', link: '#', hasArrow: true },
-        { name: 'General Ledger', link: '#', hasArrow: true },
-      ],
-    },
-  ];
+  const handleEdit = (id) => {
+    setOpenDropdown(null);
+    const event = new CustomEvent('setActiveContent', { detail: `expense-claim-edit-${id}` });
+    window.dispatchEvent(event);
+    window.history.pushState({ activeContent: `expense-claim-edit-${id}`, editId: id }, '', '/');
+  };
+
+  const handleDelete = (id) => {
+    setOpenDropdown(null);
+    setAlertMessage('Are you sure you want to delete this expense claim?');
+    setAlertAction(() => () => {
+      const updatedClaims = expenseClaims.filter(item => item.id !== id);
+      setExpenseClaims(updatedClaims);
+      localStorage.setItem('expenseClaims', JSON.stringify(updatedClaims));
+      setAlertOpen(false);
+    });
+    setAlertOpen(true);
+  };
+
+  const filteredClaims = expenseClaims.filter(claim => {
+    const employee = claim.employee || '';
+    const expenseType = claim.expenseType || '';
+    const status = claim.status || '';
+    
+    return (
+      employee.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      expenseType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      status.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Approved': return 'bg-green-100 text-green-800';
+      case 'Submitted': return 'bg-yellow-100 text-yellow-800';
+      case 'Draft': return 'bg-blue-100 text-blue-800';
+      case 'Rejected': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   return (
-    <div className="p-10 bg-gray-50 min-h-full">
-      <div className="max-w-6xl mx-auto">
-        {/* Main Container with Single Border */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          
-          {/* Expense Claims Section */}
-          <div className="px-6 py-10">
-            
-            
-            {/* Chart Section */}
-            <div className="bg-white border border-gray-100 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-sm font-bold text-gray-500">Expense Claims</h2>
-                  <p className="text-sm text-gray-500">Last synced just now</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
-                    <Filter className="h-4 w-4" />
-                  </button>
-                  <button className="flex items-center space-x-1 px-2 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
-                    <span>Last Year</span>
-                    <ChevronDown className="h-4 w-4" />
-                  </button>
-                  <button className="flex items-center space-x-1 px-2 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
-                    <Calendar className="h-4 w-4" />
-                    <span>Monthly</span>
-                    <ChevronDown className="h-4 w-4" />
-                  </button>
-                  <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </button>
-                </div>
+    <div className="p-6 bg-gray-50 min-h-full">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-6 flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Expense Claim</h1>
+            <p className="text-sm text-gray-600 mt-1">Manage and track employee expense claims</p>
+          </div>
+          <button 
+            onClick={() => {
+              const event = new CustomEvent('setActiveContent', { detail: 'expense-claim-form' });
+              window.dispatchEvent(event);
+              window.history.pushState({ activeContent: 'expense-claim-form' }, '', '/');
+            }}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+          >
+            <Plus className="h-5 w-5" />
+            <span>Add Expense Claim</span>
+          </button>
+        </div>
+
+        {/* Search and Filter */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+          <div className="flex items-center space-x-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by employee, expense type, or status..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <button
+              onClick={() => setShowFilter(!showFilter)}
+              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              <Filter className="h-5 w-5" />
+              <span>Filter</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Expense Claims Table */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Employee
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Expense Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Amount
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Posting Date
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredClaims.map((claim) => (
+                  <tr key={claim.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {claim.id}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{claim.employee || '-'}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {claim.expenseType || '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                      ${claim.amount || '0.00'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(claim.status)}`}>
+                        {claim.status || 'Draft'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {claim.postingDate || '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button 
+                        onClick={(e) => {
+                          if (openDropdown === claim.id) {
+                            setOpenDropdown(null);
+                          } else {
+                            setOpenDropdown(claim.id);
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const spaceAbove = rect.top;
+                            const spaceBelow = window.innerHeight - rect.bottom;
+                            if (spaceAbove > spaceBelow + 100) {
+                              setDropdownStyle({
+                                bottom: `${window.innerHeight - rect.top}px`,
+                                right: `${window.innerWidth - rect.right}px`
+                              });
+                            } else {
+                              setDropdownStyle({
+                                top: `${rect.bottom}px`,
+                                right: `${window.innerWidth - rect.right}px`
+                              });
+                            }
+                          }
+                        }}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        <MoreVertical className="h-5 w-5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Overlay Dropdown */}
+        {openDropdown && (
+          <>
+            <div 
+              className="fixed inset-0 z-40" 
+              onClick={() => setOpenDropdown(null)}
+            ></div>
+            <div 
+              className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50"
+              style={dropdownStyle}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="py-1">
+                {(() => {
+                  const selectedClaim = expenseClaims.find(c => c.id === openDropdown);
+                  if (!selectedClaim) return null;
+                  
+                  return (
+                    <>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(selectedClaim.id);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                      >
+                        <Pencil className="h-4 w-4" />
+                        <span>Edit</span>
+                      </button>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(selectedClaim.id);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100 flex items-center space-x-2"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span>Delete</span>
+                      </button>
+                    </>
+                  );
+                })()}
               </div>
-              
-              {/* Custom Chart */}
-              <div className="relative h-64">
-                {/* Y-axis labels */}
-                <div className="absolute left-2 top-0 h-full flex flex-col justify-between">
-                  {[5, 4, 3, 2, 1, 0].map((value) => (
-                    <span key={value} className="text-xs text-gray-500 font-medium">
-                      {value}
-                    </span>
-                  ))}
-                </div>
-                
-                {/* Grid lines */}
-                <div className="absolute left-8 right-4 top-0 h-full">
-                  {[0, 1, 2, 3, 4, 5].map((value) => (
-                    <div 
-                      key={value}
-                      className="absolute w-full border-t border-gray-100"
-                      style={{ top: `${(value / 5) * 100}%` }}
-                    />
-                  ))}
-                </div>
-                
-                {/* Blue line at 0 value */}
-                <div className="absolute left-8 right-4 bottom-12 h-0.5 bg-blue-500"></div>
-                
-                {/* Month labels */}
-                <div className="absolute -bottom-5 left-8 right-4 flex justify-between">
-                  {chartData.map((item) => (
-                    <span key={item.month} className="text-xs text-gray-500 font-medium">
-                      {item.month}
-                    </span>
-                  ))}
-                </div>
+            </div>
+          </>
+        )}
+
+        {/* Custom Alert Modal */}
+        {alertOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-white rounded-lg shadow-lg border border-gray-200 w-full max-w-sm p-5">
+              <h3 className="text-base font-semibold text-gray-900 mb-2">Confirm Delete</h3>
+              <p className="text-sm text-gray-600 mb-5">{alertMessage}</p>
+              <div className="flex justify-end space-x-2">
+                <button onClick={() => setAlertOpen(false)} className="px-3 py-1.5 text-sm rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50">No</button>
+                <button onClick={() => { if (alertAction) alertAction(); }} className="px-3 py-1.5 text-sm rounded-md bg-red-600 text-white hover:bg-red-700">Yes, Delete</button>
               </div>
             </div>
           </div>
-
-         
-
-          {/* Dynamic Module Sections */}
-          <ModuleSections 
-            shortcuts={expenseClaimsShortcuts}
-            reportsAndMasters={expenseClaimsReportsAndMasters}
-            shortcutsTitle="Your Shortcuts"
-            reportsTitle="Masters & Reports"
-          />
-          <div className="flex justify-end mt-6 pr-6 pb-2">
-          <div className="flex items-center space-x-1">
-            <button className="inline-flex items-center space-x-1 px-2 py-1 text-sm text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">
-              <Edit3 className="h-4 w-4" />
-              <span>Edit</span>
-            </button>
-            <button className="inline-flex items-center space-x-1 px-2 py-1 text-sm text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">
-              <Plus className="h-4 w-4" />
-              <span>New</span>
-            </button>
-          </div>
-        </div>
-        </div>
-        
-        {/* Edit and New Buttons - Bottom Right Corner */}
-        
+        )}
       </div>
     </div>
   );

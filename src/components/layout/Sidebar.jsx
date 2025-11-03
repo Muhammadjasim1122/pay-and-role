@@ -33,7 +33,9 @@ export default function Sidebar({ isOpen, setIsOpen, setActiveContent, activeCon
     recruitment: true,
     lifecycle: false,
     performance: false,
-    attendance: false
+    attendance: false,
+    expenseClaims: false,
+    users: false
   });
   
   // Helper: active when exact match OR when navigating to that item's form/edit
@@ -84,19 +86,8 @@ export default function Sidebar({ isOpen, setIsOpen, setActiveContent, activeCon
     }));
   };
 
-  const menuItems = [
-    {
-      id: 'payroll',
-      title: 'Payroll',
-      icon: null,
-      isSection: true
-    },
-    { id: 'tools', title: 'Tools', icon: 'wrench', href: '#' },
-    { id: 'erpnext-settings', title: 'ERPNext Settings', icon: 'settings', href: '#' },
-    { id: 'integrations', title: 'Integrations', icon: 'plug', href: '#' },
-    { id: 'erpnext-integrations', title: 'ERPNext Integrations', icon: 'plug', href: '#' },
-    { id: 'build', title: 'Build', icon: 'hammer', href: '#' }
-  ];
+  // Removed extra standalone items (projects/website/tools/payroll per requirement)
+  const menuItems = [];
 
   const getIcon = (iconName, size = 16) => {
     const commonProps = { size: size, strokeWidth: 1.75, className: 'shrink-0' };
@@ -488,144 +479,144 @@ export default function Sidebar({ isOpen, setIsOpen, setActiveContent, activeCon
 
               {/* Other Siblings under PUBLIC */}
               <div>
+                {/* Expense Claims (collapsible group) */}
+                <button
+                  onClick={() => toggleSection('expenseClaims')}
+                  className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200 ease-in-out"
+                >
+                  <span className="flex items-center space-x-2">
+                    {getIcon('clipboard')}
+                    <span>Expense Claims</span>
+                  </span>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${expandedSections.expenseClaims ? 'rotate-180' : ''}`} />
+                </button>
+
+                {expandedSections.expenseClaims && (
+                  <div className="pl-6 space-y-1 mt-1">
                     <button 
                       onClick={() => setActiveContent('expense-claims')}
-                      className={`w-full flex items-center space-x-2 px-2 py-1 text-sm transition-all duration-200 ease-in-out rounded-lg ${
-                        activeContent === 'expense-claims'
+                      className={`w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] transition-all duration-200 ease-in-out rounded-md ${
+                        isContentActive('expense-claims')
                           ? 'bg-gray-200 text-gray-800'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          : 'text-gray-600 hover:bg-gray-50'
                       }`}
                     >
-                      {getIcon('clipboard')}
-                      <span>Expense Claims</span>
+                      {getIcon('file-text', 14)}
+                      <span>Expense Claim</span>
                     </button>
                     <button 
-                      onClick={() => setActiveContent('leaves')}
-                      className={`w-full flex items-center space-x-2 px-2 py-1 text-sm transition-all duration-200 ease-in-out rounded-lg ${
-                        activeContent === 'leaves'
+                      onClick={() => setActiveContent('employee-advance')}
+                      className={`w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] transition-all duration-200 ease-in-out rounded-md ${
+                        isContentActive('employee-advance')
                           ? 'bg-gray-200 text-gray-800'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          : 'text-gray-600 hover:bg-gray-50'
                       }`}
                     >
-                      {getIcon('heart')}
-                      <span>Leaves</span>
+                      {getIcon('file-text', 14)}
+                      <span>Employee Advance</span>
                     </button>
-                <button 
-                  onClick={() => setActiveContent('projects')}
-                  className={`w-full flex items-center space-x-2 px-2 py-1 text-sm transition-all duration-200 ease-in-out rounded-lg ${
-                    activeContent === 'projects'
-                      ? 'bg-gray-200 text-gray-800'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  {getIcon('folder')}
-                  <span>Projects</span>
-                </button>
-                <button 
-                  onClick={() => setActiveContent('users')}
-                  className={`w-full flex items-center space-x-2 px-2 py-1 text-sm transition-all duration-200 ease-in-out rounded-lg ${
-                    activeContent === 'users'
-                      ? 'bg-gray-200 text-gray-800'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  {getIcon('users')}
-                  <span>Users</span>
-                </button>
-                <button 
-                  onClick={() => setActiveContent('website')}
-                  className={`w-full flex items-center space-x-2 px-2 py-1 text-sm transition-all duration-200 ease-in-out rounded-lg ${
-                    activeContent === 'website'
-                      ? 'bg-gray-200 text-gray-800'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  {getIcon('monitor')}
-                  <span>Website</span>
-                </button>
-                <button 
-                  onClick={() => {
-                    console.log('Tools button clicked');
-                    setActiveContent('tools');
-                  }}
-                  className={`w-full flex items-center space-x-2 px-2 py-1 text-sm transition-all duration-200 ease-in-out rounded-lg ${
-                    activeContent === 'tools'
-                      ? 'bg-gray-200 text-gray-800'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  {getIcon('hammer')}
-                  <span>Tools</span>
-                </button>
-              </div>
-
-            </div>
-
-            {/* Payroll Section outside the first div */}
-            <div>
-              {/* PAYROLL Section */}
-              <div>
-                <button
-                  onClick={() => setActiveContent('payroll')}
-                  className={`w-full flex items-center space-x-2 px-2 py-1 text-sm transition-all duration-200 ease-in-out rounded-lg ${
-                    activeContent === 'payroll'
-                      ? 'bg-gray-200 text-gray-800'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  {getIcon('coins')}
-                  <span>Payroll</span>
-                </button>
-                {expandedSections.payroll && (
-                  <div className="pl-4 space-y-0">
-                    <button
-                      onClick={() => setActiveContent('salary-payout')}
-                      className={`w-full flex items-center space-x-2 px-2 py-1 text-sm transition-all duration-200 ease-in-out rounded-lg ${
-                        activeContent === 'salary-payout'
+                    <button 
+                      onClick={() => setActiveContent('expense-claims-dashboard')}
+                      className={`w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] transition-all duration-200 ease-in-out rounded-md ${
+                        isContentActive('expense-claims-dashboard')
                           ? 'bg-gray-200 text-gray-800'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          : 'text-gray-600 hover:bg-gray-50'
                       }`}
                     >
-                      {getIcon('coins')}
-                      <span>Salary Payout</span>
+                      {getIcon('pie-chart', 14)}
+                      <span>Dashboard</span>
                     </button>
-                    <button
-                      onClick={() => setActiveContent('tax-and-payout')}
-                      className={`w-full flex items-center space-x-2 px-2 py-1 text-sm transition-all duration-200 ease-in-out rounded-lg ${
-                        activeContent === 'tax-and-payout'
+                    <button 
+                      onClick={() => setActiveContent('expense-claims-details')}
+                      className={`w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] transition-all duration-200 ease-in-out rounded-md ${
+                        isContentActive('expense-claims-details')
                           ? 'bg-gray-200 text-gray-800'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          : 'text-gray-600 hover:bg-gray-50'
                       }`}
                     >
-                      {getIcon('pie-chart')}
-                      <span>Tax & Payout</span>
+                      {getIcon('file-text', 14)}
+                      <span>Details</span>
                     </button>
                   </div>
                 )}
+                {/* Projects removed */}
+
+                {/* Users (collapsible group) */}
+                <button 
+                  onClick={() => toggleSection('users')}
+                  className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200 ease-in-out"
+                >
+                  <span className="flex items-center space-x-2">
+                    {getIcon('users')}
+                    <span>Users</span>
+                  </span>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${expandedSections.users ? 'rotate-180' : ''}`} />
+                </button>
+
+                {expandedSections.users && (
+                  <div className="pl-6 space-y-1 mt-1">
+                    <button 
+                      onClick={() => setActiveContent('user')}
+                      className={`w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] transition-all duration-200 ease-in-out rounded-md ${
+                        isContentActive('user')
+                          ? 'bg-gray-200 text-gray-800'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {getIcon('file-text', 14)}
+                      <span>User</span>
+                    </button>
+                    <button 
+                      onClick={() => setActiveContent('user-type')}
+                      className={`w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] transition-all duration-200 ease-in-out rounded-md ${
+                        isContentActive('user-type')
+                          ? 'bg-gray-200 text-gray-800'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {getIcon('file-text', 14)}
+                      <span>User Type</span>
+                    </button>
+                    <button 
+                      onClick={() => setActiveContent('role')}
+                      className={`w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] transition-all duration-200 ease-in-out rounded-md ${
+                        isContentActive('role')
+                          ? 'bg-gray-200 text-gray-800'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {getIcon('file-text', 14)}
+                      <span>Role</span>
+                    </button>
+                    <button 
+                      onClick={() => setActiveContent('permission-manager')}
+                      className={`w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] transition-all duration-200 ease-in-out rounded-md ${
+                        isContentActive('permission-manager')
+                          ? 'bg-gray-200 text-gray-800'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {getIcon('file-text', 14)}
+                      <span>Permission Manager</span>
+                    </button>
+                    <button 
+                      onClick={() => setActiveContent('user-profile')}
+                      className={`w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] transition-all duration-200 ease-in-out rounded-md ${
+                        isContentActive('user-profile')
+                          ? 'bg-gray-200 text-gray-800'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {getIcon('file-text', 14)}
+                      <span>User Profile</span>
+                    </button>
+                  </div>
+                )}
+                {/* Website and Tools removed */}
               </div>
 
-              {/* Standalone Items */}
-              {menuItems
-                .filter((m) => !m.isSection)
-                .map((item) => (
-                  <a
-                    key={item.id}
-                    href={item.href}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setActiveContent(item.id);
-                    }}
-                    className={`flex items-center space-x-2 px-2 py-1 text-sm transition-all duration-200 ease-in-out rounded-lg ${
-                      activeContent === item.id
-                        ? 'bg-gray-200 text-gray-800'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    {getIcon(item.icon)}
-                    <span>{item.title}</span>
-                  </a>
-                ))}
             </div>
+            {/* Payroll, Standalone and below items removed */}
         </nav>
       </div>
     </aside>

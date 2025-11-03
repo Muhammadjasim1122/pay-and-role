@@ -18,6 +18,9 @@ import Recruitment from '../main/hr/recruitment';
 import Lifecycle from '../main/hr/lifecycle';
 import Performance from '../main/hr/performance';
 import ExpenseClaims from '../main/hr/expense-claims';
+import ExpenseClaimForm from '../main/hr/expense-claim-form';
+import EmployeeAdvance from '../main/hr/employee-advance';
+import EmployeeAdvanceForm from '../main/hr/employee-advance-form';
 import Leaves from '../main/hr/leaves';
 import Projects from '../main/hr/projects';
 import Users from '../main/hr/users';
@@ -72,6 +75,14 @@ import PerformanceFeedback from '../main/hr/performance-feedback';
 import PerformanceFeedbackForm from '../main/hr/performance-feedback-form';
 import Goal from '../main/hr/goal';
 import GoalForm from '../main/hr/goal-form';
+import UserList from '../main/hr/user-list';
+import UserForm from '../main/hr/user-form';
+import UserType from '../main/hr/user-type';
+import Role from '../main/hr/role';
+import RoleForm from '../main/hr/role-form';
+import PermissionManager from '../main/hr/permission-manager';
+import UserProfile from '../main/hr/user-profile';
+import UserSettings from '../main/hr/user-settings';
 
 export default function Layout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -139,13 +150,58 @@ export default function Layout({ children }) {
       document.title = 'Shift & Attendance - HRM App';
     } else if (activeContent === 'expense-claims') {
       // Update browser title
-      document.title = 'Expense Claims - HRM App';
+      document.title = 'Expense Claim - HRM App';
+    } else if (activeContent === 'expense-claim-form') {
+      // Update browser title
+      document.title = 'Add Expense Claim - HRM App';
+    } else if (activeContent?.startsWith('expense-claim-edit-')) {
+      // Update browser title
+      document.title = 'Edit Expense Claim - HRM App';
+    } else if (activeContent === 'employee-advance-form') {
+      // Update browser title
+      document.title = 'Add Employee Advance - HRM App';
+    } else if (activeContent?.startsWith('employee-advance-edit-')) {
+      // Update browser title
+      document.title = 'Edit Employee Advance - HRM App';
+    } else if (activeContent === 'employee-advance') {
+      // Update browser title
+      document.title = 'Employee Advance - HRM App';
     } else if (activeContent === 'leaves') {
       // Update browser title
       document.title = 'Leaves - HRM App';
     } else if (activeContent === 'projects') {
       // Update browser title
       document.title = 'Projects - HRM App';
+    } else if (activeContent === 'user') {
+      // Update browser title
+      document.title = 'User - HRM App';
+    } else if (activeContent === 'user-form') {
+      // Update browser title
+      document.title = 'Add User - HRM App';
+    } else if (activeContent?.startsWith('user-edit-')) {
+      // Update browser title
+      document.title = 'Edit User - HRM App';
+    } else if (activeContent === 'user-type') {
+      // Update browser title
+      document.title = 'User Type - HRM App';
+    } else if (activeContent === 'role') {
+      // Update browser title
+      document.title = 'Role - HRM App';
+    } else if (activeContent === 'role-form') {
+      // Update browser title
+      document.title = 'Add Role - HRM App';
+    } else if (activeContent?.startsWith('role-edit-')) {
+      // Update browser title
+      document.title = 'Edit Role - HRM App';
+    } else if (activeContent === 'permission-manager') {
+      // Update browser title
+      document.title = 'Permission Manager - HRM App';
+    } else if (activeContent === 'user-profile') {
+      // Update browser title
+      document.title = 'User Profile - HRM App';
+    } else if (activeContent === 'user-settings') {
+      // Update browser title
+      document.title = 'User Settings - HRM App';
     } else if (activeContent === 'users') {
       // Update browser title
       document.title = 'Users - HRM App';
@@ -290,14 +346,40 @@ export default function Layout({ children }) {
         setActiveContent('lifecycle');
       } else if (event.state?.activeContent === 'performance') {
         setActiveContent('performance');
-      } else if (event.state?.activeContent === 'shift-attendance') {
-        setActiveContent('shift-attendance');
       } else if (event.state?.activeContent === 'expense-claims') {
         setActiveContent('expense-claims');
+      } else if (event.state?.activeContent === 'expense-claim-form') {
+        setActiveContent('expense-claim-form');
+      } else if (event.state?.activeContent === 'employee-advance-form') {
+        setActiveContent('employee-advance-form');
+      } else if (event.state?.activeContent?.startsWith('employee-advance-edit-')) {
+        setActiveContent(event.state.activeContent);
+      } else if (event.state?.activeContent === 'employee-advance') {
+        setActiveContent('employee-advance');
       } else if (event.state?.activeContent === 'leaves') {
         setActiveContent('leaves');
       } else if (event.state?.activeContent === 'projects') {
         setActiveContent('projects');
+      } else if (event.state?.activeContent === 'user') {
+        setActiveContent('user');
+      } else if (event.state?.activeContent === 'user-form') {
+        setActiveContent('user-form');
+      } else if (event.state?.activeContent?.startsWith('user-edit-')) {
+        setActiveContent(event.state.activeContent);
+      } else if (event.state?.activeContent === 'user-type') {
+        setActiveContent('user-type');
+      } else if (event.state?.activeContent === 'role') {
+        setActiveContent('role');
+      } else if (event.state?.activeContent === 'role-form') {
+        setActiveContent('role-form');
+      } else if (event.state?.activeContent?.startsWith('role-edit-')) {
+        setActiveContent(event.state.activeContent);
+      } else if (event.state?.activeContent === 'permission-manager') {
+        setActiveContent('permission-manager');
+      } else if (event.state?.activeContent === 'user-profile') {
+        setActiveContent('user-profile');
+      } else if (event.state?.activeContent === 'user-settings') {
+        setActiveContent('user-settings');
       } else if (event.state?.activeContent === 'users') {
         setActiveContent('users');
       } else if (event.state?.activeContent === 'website') {
@@ -394,22 +476,15 @@ export default function Layout({ children }) {
     };
   }, []);
 
-  return (
-    <DashboardProvider>
-      <EmployeeProvider>
-        <LeaveApplicationProvider>
-          <RecruitmentProvider>
-    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
-      {/* Header */}
-      <Header 
-        isSidebarOpen={isSidebarOpen} 
-        setIsSidebarOpen={setIsSidebarOpen}
-        activeContent={activeContent}
-      />
-
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar - Hide for Holiday List, Leave Type, Leave Allocation, and Leave Application */}
-        {activeContent !== 'holiday-list' && activeContent !== 'leave-type' && activeContent !== 'leave-allocation' && activeContent !== 'leave-application' && (
+  // Render UserSettings with special layout
+  const renderContent = () => {
+    if (activeContent === 'user-settings') {
+      return <UserSettings />;
+    }
+    return (
+      <>
+        {/* Sidebar - Hide for Holiday List, Leave Type, Leave Allocation, Leave Application, and User Settings */}
+        {activeContent !== 'holiday-list' && activeContent !== 'leave-type' && activeContent !== 'leave-allocation' && activeContent !== 'leave-application' && activeContent !== 'user-settings' && (
           <>
             {(activeContent === 'hr-settings' || activeContent === 'employee') ? (
               <HRSettingsSidebar 
@@ -434,13 +509,31 @@ export default function Layout({ children }) {
           className="flex-1 overflow-auto"
         >
           {activeContent === 'hr' ? <HR /> : activeContent === 'hr-dashboard' ? <HRDashboard /> : activeContent === 'dashboard-form' ? <HRDashboardForm dashboardType="hr" isSidebarOpen={isSidebarOpen} /> : activeContent === 'recruitment-dashboard-form' ? <HRDashboardForm dashboardType="recruitment" isSidebarOpen={isSidebarOpen} /> : activeContent === 'dashboard-details' ? <DashboardDetails /> : activeContent === 'recruitment-dashboard' ? <RecruitmentDashboard /> : activeContent === 'recruitment-details' ? <RecruitmentDetails /> : activeContent === 'recruitment' ? <Recruitment /> : activeContent === 'lifecycle' ? <Lifecycle /> 
-          : activeContent === 'performance' ? <Performance /> : activeContent === 'appraisal' ? <Appraisal /> : activeContent === 'appraisal-form' ? <AppraisalForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('appraisal-edit-') ? <AppraisalForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('appraisal-edit-', '')} /> : activeContent === 'performance-feedback' ? <PerformanceFeedback /> : activeContent === 'performance-feedback-form' ? <PerformanceFeedbackForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('performance-feedback-edit-') ? <PerformanceFeedbackForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('performance-feedback-edit-', '')} /> : activeContent === 'goal' ? <Goal /> : activeContent === 'goal-form' ? <GoalForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('goal-edit-') ? <GoalForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('goal-edit-', '')} /> : activeContent === 'expense-claims' ? <ExpenseClaims /> : activeContent === 'leaves' ? <Leaves /> : activeContent === 'projects' ? <Projects /> : activeContent === 'users' ? <Users /> : activeContent === 'website' ? <Website /> : activeContent === 'payroll' ? <Payroll /> : activeContent === 'salary-payout' ? <SalaryPayout /> : activeContent === 'tax-and-payout' ? <TaxAndPayout /> : activeContent === 'tools' ? <Tools /> 
+          : activeContent === 'performance' ? <Performance /> : activeContent === 'appraisal' ? <Appraisal /> : activeContent === 'appraisal-form' ? <AppraisalForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('appraisal-edit-') ? <AppraisalForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('appraisal-edit-', '')} /> : activeContent === 'performance-feedback' ? <PerformanceFeedback /> : activeContent === 'performance-feedback-form' ? <PerformanceFeedbackForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('performance-feedback-edit-') ? <PerformanceFeedbackForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('performance-feedback-edit-', '')} /> : activeContent === 'goal' ? <Goal /> : activeContent === 'goal-form' ? <GoalForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('goal-edit-') ? <GoalForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('goal-edit-', '')} /> : activeContent === 'expense-claims' ? <ExpenseClaims /> : activeContent === 'expense-claim-form' ? <ExpenseClaimForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('expense-claim-edit-') ? <ExpenseClaimForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('expense-claim-edit-', '')} /> : activeContent === 'employee-advance' ? <EmployeeAdvance /> : activeContent === 'employee-advance-form' ? <EmployeeAdvanceForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('employee-advance-edit-') ? <EmployeeAdvanceForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('employee-advance-edit-', '')} /> : activeContent === 'leaves' ? <Leaves /> : activeContent === 'projects' ? <Projects /> : activeContent === 'users' ? <Users /> : activeContent === 'user' ? <UserList /> : activeContent === 'user-form' ? <UserForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('user-edit-') ? <UserForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('user-edit-', '')} /> : activeContent === 'user-type' ? <UserType /> : activeContent === 'role' ? <Role /> : activeContent === 'role-form' ? <RoleForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('role-edit-') ? <RoleForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('role-edit-', '')} /> : activeContent === 'permission-manager' ? <PermissionManager /> : activeContent === 'user-profile' ? <UserProfile /> : activeContent === 'website' ? <Website /> : activeContent === 'payroll' ? <Payroll /> : activeContent === 'salary-payout' ? <SalaryPayout /> : activeContent === 'tax-and-payout' ? <TaxAndPayout /> : activeContent === 'tools' ? <Tools /> 
           : activeContent === 'erpnext-settings' ? <ERPNext /> : activeContent === 'integrations' ? <Integrations /> 
            : activeContent === 'erpnext-integrations' ? <ERPNextIntegrations /> : activeContent === 'build' ? <Build />
             : activeContent === 'hr-settings' ? <HRSettings /> : activeContent === 'holiday-list' ? <HolidayList /> : activeContent === 'employee-list' ? <EmployeeList /> : activeContent === 'employee' ? <Employee /> : activeContent === 'leave-type' ? <LeaveType /> : activeContent === 'leave-allocation' ? <LeaveAllocation /> : activeContent === 'leave-application' ? <LeaveApplication isSidebarOpen={isSidebarOpen} /> : activeContent === 'leave-application-list' ? <LeaveApplicationList /> : activeContent === 'lifecycle-dashboard' ? <LifecycleDashboard /> : activeContent === 'lifecycle-dashboard-form' ? <LifecycleDashboardForm dashboardType="lifecycle" isSidebarOpen={isSidebarOpen} /> : activeContent === 'lifecycle-details' ? <LifecycleDetails /> : activeContent === 'attendance-dashboard' ? <AttendanceDashboard /> : activeContent === 'attendance-dashboard-form' ? <AttendanceDashboardForm dashboardType="attendance" isSidebarOpen={isSidebarOpen} /> : activeContent === 'attendance-details' ? <AttendanceDetails /> : activeContent === 'expense-claims-dashboard' ? <ExpenseClaimsDashboard /> : activeContent === 'expense-claims-dashboard-form' ? <ExpenseClaimsDashboardForm dashboardType="expense-claims" isSidebarOpen={isSidebarOpen} /> : activeContent === 'expense-claims-details' ? <ExpenseClaimsDetails /> : activeContent === 'job-opening' ? <JobOpening /> : activeContent === 'job-applicant' ? <JobApplicant /> : activeContent === 'job-offer' ? <JobOffer /> : activeContent === 'job-opening-form' ? <JobOpeningForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('job-opening-edit-') ? <JobOpeningForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('job-opening-edit-', '')} /> : activeContent === 'job-applicant-form' ? <JobApplicantForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('job-applicant-edit-') ? <JobApplicantForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('job-applicant-edit-', '')} /> : activeContent === 'job-offer-form' ? <JobOfferForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('job-offer-edit-') ? <JobOfferForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('job-offer-edit-', '')} /> : activeContent === 'employee-onboarding' ? <EmployeeOnboarding /> : activeContent === 'employee-onboarding-form' ? <EmployeeOnboardingForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('employee-onboarding-edit-') ? <EmployeeOnboardingForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('employee-onboarding-edit-', '')} /> : activeContent === 'employee-separation' ? <EmployeeSeparation /> : activeContent === 'employee-separation-form' ? <EmployeeSeparationForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('employee-separation-edit-') ? <EmployeeSeparationForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('employee-separation-edit-', '')} /> : activeContent === 'employee-grievance' ? <EmployeeGrievance /> : activeContent === 'employee-grievance-form' ? <EmployeeGrievanceForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('employee-grievance-edit-') ? <EmployeeGrievanceForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('employee-grievance-edit-', '')} /> : activeContent === 'shift-schedule' ? <ShiftSchedule /> : activeContent === 'shift-schedule-form' ? <ShiftScheduleForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('shift-schedule-edit-') ? <ShiftScheduleForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('shift-schedule-edit-', '')} /> : activeContent === 'shift-request' ? <ShiftRequest /> : activeContent === 'shift-request-form' ? <ShiftRequestForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('shift-request-edit-') ? <ShiftRequestForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('shift-request-edit-', '')} /> : activeContent === 'attendance' ? <Attendance /> : activeContent === 'attendance-form' ? <AttendanceForm isSidebarOpen={isSidebarOpen} /> : activeContent?.startsWith('attendance-edit-') ? <AttendanceForm isSidebarOpen={isSidebarOpen} editId={activeContent.replace('attendance-edit-', '')} /> : children}
         </main>
-      </div>
-    </div>
+      </>
+    );
+  };
+
+  return (
+    <DashboardProvider>
+      <EmployeeProvider>
+        <LeaveApplicationProvider>
+          <RecruitmentProvider>
+            <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+              {/* Header */}
+              <Header 
+                isSidebarOpen={isSidebarOpen} 
+                setIsSidebarOpen={setIsSidebarOpen}
+                activeContent={activeContent}
+              />
+              <div className="flex flex-1 overflow-hidden">
+                {renderContent()}
+              </div>
+            </div>
           </RecruitmentProvider>
         </LeaveApplicationProvider>
       </EmployeeProvider>
