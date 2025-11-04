@@ -7,10 +7,18 @@ export function useToast() {
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
   const showToast = (message, type = 'success') => {
-    setToast({ show: true, message, type });
+    if (message === '') {
+      setToast({ show: false, message: '', type });
+    } else {
+      setToast({ show: true, message, type });
+    }
   };
 
-  return { toast, showToast };
+  const hideToast = () => {
+    setToast({ show: false, message: '', type: toast.type });
+  };
+
+  return { toast, showToast, hideToast };
 }
 
 export function Toast({ toast, onClose }) {

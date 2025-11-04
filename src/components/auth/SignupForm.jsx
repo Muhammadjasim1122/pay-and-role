@@ -2,31 +2,110 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Toast, useToast } from '../ui/toast';
 
 export default function SignupForm() {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const { toast, showToast, hideToast } = useToast();
+
   const router = useRouter();
+
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
+    setError('');
   };
 
-  const handleEmailSubmit = (e) => {
+  const handlePasswordChange = (e) => {
+    setPassword(e.target.value);
+    setError('');
+  };
+
+  const handleEmailSubmit = async (e) => {
     e.preventDefault();
-    // Handle email signup logic here
-    console.log('Email signup attempt:', email);
-    
-    // For demo purposes, redirect to dashboard after signup
-    // In a real app, you'd create account first
-    router.push('/dashboard');
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      // Check if response is ok before parsing JSON
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Network error or server not responding' }));
+        throw new Error(errorData.message || `Server error: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // Store token in localStorage
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+      }
+
+      showToast('Signup successful! Redirecting to login...', 'success');
+
+      // Redirect to login page after a short delay
+      setTimeout(() => {
+        router.push('/login');
+      }, 1000);
+    } catch (err) {
+      // More specific error messages
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        setError('Cannot connect to server. Please make sure the backend server is running on port 5000.');
+      } else {
+        setError(err.message || 'An error occurred during signup');
+      }
+      console.error('Signup error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleGoogleSignup = () => {
-    // Handle Google signup logic here
-    console.log('Google signup attempt');
-    
-    // For demo purposes, redirect to dashboard after signup
-    router.push('/dashboard');
+  const handleGoogleSignup = async () => {
+    setError('');
+    setLoading(true);
+
+    try {
+      // For Google OAuth, you would typically use a library like @react-oauth/google
+      // For now, this is a placeholder that shows the structure
+      // You'll need to implement Google OAuth on the frontend first
+      console.log('Google signup attempt');
+      
+      // Example: After getting Google user data, send to backend
+      // const response = await fetch(`${API_BASE_URL}/api/auth/google-signup`, {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     email: googleUser.email,
+      //     googleId: googleUser.id,
+      //     fullName: googleUser.name,
+      //     profileImage: googleUser.picture,
+      //   }),
+      // });
+
+      // For demo purposes, show a message
+      setError('Google signup is not fully implemented yet. Please use email signup.');
+      setLoading(false);
+    } catch (err) {
+      setError(err.message || 'An error occurred during Google signup');
+      setLoading(false);
+    }
   };
 
   return (
@@ -54,7 +133,8 @@ export default function SignupForm() {
           {/* Google Signup Button */}
           <button 
             onClick={handleGoogleSignup}
-            className="w-[380px] flex justify-center items-center py-1 px-2  rounded-lg text-sm font-medium text-gray-900 bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+            disabled={loading}
+            className="w-[380px] flex justify-center items-center py-1 px-2  rounded-lg text-sm font-medium text-gray-900 bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -67,6 +147,11 @@ export default function SignupForm() {
 
           {/* Email Signup Form */}
           <form onSubmit={handleEmailSubmit} className="space-y-4">
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-1">
                 Email *
@@ -79,14 +164,33 @@ export default function SignupForm() {
                 className="block w-[380px] px-3 py-1 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent text-sm"
                 placeholder="johndoe@mail.com"
                 required
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-900 mb-1">
+                Password *
+              </label>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={handlePasswordChange}
+                className="block w-[380px] px-3 py-1 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent text-sm"
+                placeholder="Enter your password"
+                required
+                minLength={6}
+                disabled={loading}
               />
             </div>
 
             <button
               type="submit"
-              className="w-full flex justify-center py-1 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+              disabled={loading}
+              className="w-full flex justify-center py-1 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign up with email
+              {loading ? 'Signing up...' : 'Sign up with email'}
             </button>
           </form>
 
@@ -107,6 +211,12 @@ export default function SignupForm() {
           </div>
         </div>
       </div>
+
+      {/* Toast Notification */}
+      <Toast
+        toast={toast}
+        onClose={hideToast}
+      />
     </div>
   );
 }

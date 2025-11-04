@@ -2,31 +2,72 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Toast, useToast } from '../ui/toast';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { toast, showToast, hideToast } = useToast();
   const router = useRouter();
 
-  const handleSubmit = (e) => {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Demo credentials for testing
-    const demoCredentials = {
-      email: 'admin@frappehr.com',
-      password: 'admin123'
-    };
-    
-    console.log('Login attempt:', { email, password });
-    
-    // Check demo credentials
-    if (email === demoCredentials.email && password === demoCredentials.password) {
-      // Valid credentials - redirect to dashboard
-      router.push('/dashboard');
-    } else {
-      // Invalid credentials - show error (you can add error state later)
-      alert('Invalid credentials! Use:\nEmail: admin@frappehr.com\nPassword: admin123');
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      // Parse response data
+      const data = await response.json();
+
+      // Check if response is ok
+      if (!response.ok) {
+        // Show error toast based on error message
+        if (data.message === 'Invalid credentials' || data.message?.includes('Invalid credentials')) {
+          showToast('Email or password is incorrect. Please try again.', 'error');
+        } else {
+          showToast(data.message || `Server error: ${response.status}`, 'error');
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Store token and user data in localStorage
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+      }
+
+      // Show success toast
+      showToast('Login successful! Redirecting to dashboard...', 'success');
+
+      // Redirect to dashboard after a short delay
+      setTimeout(() => {
+        router.push('/dashboard');
+        setLoading(false);
+      }, 1000);
+    } catch (err) {
+      // Show error toast
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        showToast('Cannot connect to server. Please make sure the backend server is running on port 5000.', 'error');
+      } else {
+        showToast(err.message || 'An error occurred during login', 'error');
+      }
+      console.error('Login error:', err);
+      setLoading(false);
     }
   };
 
@@ -109,9 +150,10 @@ export default function LoginForm() {
             {/* Login Button */}
             <button
               type="submit"
-              className="w-full flex justify-center py-1 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+              disabled={loading}
+              className="w-full flex justify-center py-1 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Login
+              {loading ? 'Logging in...' : 'Login'}
             </button>
           </form>
 
@@ -141,15 +183,22 @@ export default function LoginForm() {
             </button>
           </div>
 
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h3 className="text-sm font-medium text-blue-900 mb-2">Demo Credentials:</h3>
-            <div className="text-xs text-blue-800 space-y-1">
-              <p><strong>Email:</strong> admin@frappehr.com</p>
-              <p><strong>Password:</strong> admin123</p>
-            </div>
+          {/* Sign up link */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
+              Don't have an account?{' '}
+              <a href="/signup" className="text-gray-900 hover:text-gray-700 font-medium underline">
+                Sign up
+              </a>
+            </p>
           </div>
         </div>
+
+        {/* Toast Notification */}
+        <Toast 
+          toast={toast} 
+          onClose={hideToast} 
+        />
       </div>
     </div>
   );
