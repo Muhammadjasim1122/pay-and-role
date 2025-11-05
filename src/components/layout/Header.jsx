@@ -1,0 +1,534 @@
+'use client';
+
+import React, { useState } from 'react';
+import { Menu as MenuIcon } from 'lucide-react'; // ✅ FIXED: Added import
+
+export default function Header({ isSidebarOpen, setIsSidebarOpen, activeContent }) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showHelpDropdown, setShowHelpDropdown] = useState(false);
+  const [showThreeDotsDropdown, setShowThreeDotsDropdown] = useState(false);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    console.log('Search query:', searchQuery);
+  };
+
+  return (
+    <header className="  sticky top-0 z-50">
+      <div className="px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-200">
+        <div className="flex justify-between items-center h-14">
+          
+          {/* Left side - Logo and Breadcrumb */}
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 flex items-center justify-center bg-green-500 rounded-md">
+              <svg fill="none" height="32" viewBox="0 0 32 32" width="32" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22.8571 0H9.14286C4.0934 0 0 4.0934 0 9.14286V22.8571C0 27.9066 4.0934 32 9.14286 32H22.8571C27.9066 32 32 27.9066 32 22.8571V9.14286C32 4.0934 27.9066 0 22.8571 0Z" fill="#06B58B"></path>
+                <path d="M9.70274 25.1431L8.15991 23.4517C10.3199 21.4974 13.097 20.4116 15.9885 20.4116C18.8799 20.4116 21.6685 21.4859 23.8171 23.4517L22.2742 25.1431C20.537 23.5659 18.3085 22.6973 15.9885 22.6973C13.6685 22.6973 11.4285 23.5659 9.69137 25.1431H9.70274Z" fill="white"></path>
+                <path d="M17.0514 6.85742H10.3542V9.14314H17.0514C18.3086 9.14314 19.3372 10.1717 19.3372 11.4289V13.5545C19.3372 14.8117 18.3086 15.8403 17.0514 15.8403H14.9257C13.6685 15.8403 12.64 14.8117 12.64 13.5545V12.1145H10.3542V13.5545C10.3542 16.0803 12.4 18.126 14.9257 18.126H17.0514C19.5772 18.126 21.6229 16.0803 21.6229 13.5545V11.4289C21.6229 8.90314 19.5772 6.85742 17.0514 6.85742Z" fill="white"></path>
+              </svg>
+            </div>
+            
+            {/* Breadcrumb Navigation */}
+            {activeContent === 'hr-settings' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    // Dispatch custom event to change activeContent to 'hr'
+                    const event = new CustomEvent('setActiveContent', { detail: 'hr' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
+                >
+                  HR
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">HR Settings</span>
+              </div>
+            )}
+            
+            {activeContent === 'holiday-list' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    // Dispatch custom event to change activeContent to 'hr'
+                    const event = new CustomEvent('setActiveContent', { detail: 'hr' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
+                >
+                  HR
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">Holiday List</span>
+              </div>
+            )}
+            
+            {activeContent === 'employee-list' && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-900">Employee</span>
+              </div>
+            )}
+            
+            {activeContent === 'employee' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    // Dispatch custom event to change activeContent to 'employee-list'
+                    const event = new CustomEvent('setActiveContent', { detail: 'employee-list' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
+                >
+                  Employee
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">New Employee</span>
+              </div>
+            )}
+            
+            {activeContent === 'leave-type' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    // Dispatch custom event to change activeContent to 'hr'
+                    const event = new CustomEvent('setActiveContent', { detail: 'hr' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
+                >
+                  HR
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer">
+                  Leave Type
+                </span>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">New Leave Type</span>
+              </div>
+            )}
+            
+            {activeContent === 'leave-allocation' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    // Dispatch custom event to change activeContent to 'hr'
+                    const event = new CustomEvent('setActiveContent', { detail: 'hr' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
+                >
+                  HR
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer">
+                  Leave Allocation
+                </span>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">New Leave Allocation</span>
+              </div>
+            )}
+            
+            {activeContent === 'leave-application' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    // Dispatch custom event to change activeContent to 'hr'
+                    const event = new CustomEvent('setActiveContent', { detail: 'hr' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
+                >
+                  HR
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer">
+                  Leave Application
+                </span>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">New Leave Application</span>
+              </div>
+            )}
+            
+            {activeContent === 'dashboard-form' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    // Dispatch custom event to change activeContent to 'hr-dashboard'
+                    const event = new CustomEvent('setActiveContent', { detail: 'hr-dashboard' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
+                >
+                  Dashboard
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">New Dashboard</span>
+              </div>
+            )}
+            
+            {activeContent === 'lifecycle-dashboard' && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-900">Employee Lifecycle Dashboard</span>
+              </div>
+            )}
+            
+            {activeContent === 'lifecycle-dashboard-form' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    // Dispatch custom event to change activeContent to 'lifecycle-dashboard'
+                    const event = new CustomEvent('setActiveContent', { detail: 'lifecycle-dashboard' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
+                >
+                  Employee Lifecycle Dashboard
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">New Dashboard</span>
+              </div>
+            )}
+            
+            {activeContent === 'lifecycle-details' && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-900">Employee Lifecycle Details</span>
+              </div>
+            )}
+            
+            {activeContent === 'leave-application-list' && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-900">Leave Applications</span>
+              </div>
+            )}
+            
+            {activeContent === 'attendance-dashboard' && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-900">Attendance Dashboard</span>
+              </div>
+            )}
+            
+            {activeContent === 'attendance-dashboard-form' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    const event = new CustomEvent('setActiveContent', { detail: 'attendance-dashboard' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
+                >
+                  Attendance Dashboard
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">New Dashboard</span>
+              </div>
+            )}
+            
+            {activeContent === 'attendance-details' && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-900">Attendance Details</span>
+              </div>
+            )}
+            
+            {activeContent === 'expense-claims-dashboard' && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-900">Expense Claims Dashboard</span>
+              </div>
+            )}
+            
+            {activeContent === 'expense-claims-dashboard-form' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    const event = new CustomEvent('setActiveContent', { detail: 'expense-claims-dashboard' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
+                >
+                  Expense Claims Dashboard
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">New Dashboard</span>
+              </div>
+            )}
+            
+            {activeContent === 'expense-claims-details' && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-900">Expense Claims Details</span>
+              </div>
+            )}
+            
+            {activeContent === 'job-opening' && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-900">Job Opening</span>
+              </div>
+            )}
+            
+            {activeContent === 'job-applicant' && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-900">Job Applicant</span>
+              </div>
+            )}
+            
+            {activeContent === 'job-offer' && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-900">Job Offer</span>
+              </div>
+            )}
+            
+            {activeContent === 'job-opening-form' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    const event = new CustomEvent('setActiveContent', { detail: 'job-opening' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900"
+                >
+                  Job Opening
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">New Job Opening</span>
+              </div>
+            )}
+            
+            {activeContent === 'job-applicant-form' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    const event = new CustomEvent('setActiveContent', { detail: 'job-applicant' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900"
+                >
+                  Job Applicant
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">Add Job Applicant</span>
+              </div>
+            )}
+            
+            {activeContent === 'job-offer-form' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    const event = new CustomEvent('setActiveContent', { detail: 'job-offer' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900"
+                >
+                  Job Offer
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">Send Job Offer</span>
+              </div>
+            )}
+            
+            {(activeContent === 'employee-onboarding' || activeContent === 'employee-onboarding-form' || activeContent?.startsWith('employee-onboarding-edit-')) && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-900">Employee Onboarding</span>
+              </div>
+            )}
+            
+            {activeContent === 'employee-onboarding-form' && (
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => {
+                    const event = new CustomEvent('setActiveContent', { detail: 'employee-onboarding' });
+                    window.dispatchEvent(event);
+                  }}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900"
+                >
+                  Employee Onboarding
+                </button>
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">New Employee Onboarding</span>
+              </div>
+            )}
+          </div>
+
+          {/* Center - Search Bar */}
+          
+
+          {/* Right side - Notifications, Help, User Avatar */}
+          <div className="flex items-center space-x-4">
+
+          <div className="flex-1     max-w-lg mx-8">
+            <form onSubmit={handleSearch} className="relative ">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="block w-[300px] pl-10 pr-4 py-1 bg-gray-100 border border-transparent rounded-lg text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
+                placeholder="Search or type a command (Ctrl + G)"
+              />
+            </form>
+          </div>
+            {/* Notifications */}
+            <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" className="h-5 w-5 fill-current">
+                <path d="M320 64C306.7 64 296 74.7 296 88L296 97.7C214.6 109.3 152 179.4 152 264L152 278.5C152 316.2 142 353.2 123 385.8L101.1 423.2C97.8 429 96 435.5 96 442.2C96 463.1 112.9 480 133.8 480L506.2 480C527.1 480 544 463.1 544 442.2C544 435.5 542.2 428.9 538.9 423.2L517 385.7C498 353.1 488 316.1 488 278.4L488 263.9C488 179.3 425.4 109.2 344 97.6L344 87.9C344 74.6 333.3 63.9 320 63.9zM488.4 432L151.5 432L164.4 409.9C187.7 370 200 324.6 200 278.5L200 264C200 197.7 253.7 144 320 144C386.3 144 440 197.7 440 264L440 278.5C440 324.7 45 252.1 528z"/>
+              </svg>
+            </button>
+
+            {/* Divider */}
+            <div className="h-4 w-px bg-gray-300"></div>
+
+            {/* Help Dropdown */}
+            <div className="relative">
+              <button 
+                onClick={() => setShowHelpDropdown(!showHelpDropdown)}
+                className="flex items-center space-x-1 p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <span className="text-sm font-medium">Help</span>
+                <svg className={`h-4 w-4 transition-transform ${showHelpDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {/* Help Dropdown Menu */}
+              {showHelpDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                  <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Documentation</a>
+                  <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Support</a>
+                  <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Community</a>
+                  <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Contact Us</a>
+                </div>
+              )}
+            </div>
+
+            {/* User Avatar */}
+            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+              <span className="text-sm font-medium text-blue-700">mj</span>
+            </div>
+          </div>
+        </div>
+      </div>
+       <div className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-gray-50">
+            <div className="flex items-center gap-3">
+            <button
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="h-8 w-8 flex items-center justify-center rounded hover:bg-gray-100 text-gray-700"
+              title="Toggle Sidebar"
+              aria-label="Toggle Sidebar"
+            >
+              <MenuIcon className="h-5 w-5" />
+              </button>
+              <h1 className="text-xl font-bold text-gray-900">
+                {activeContent === 'hr' ? 'HR' : activeContent === 'hr-dashboard' ? 'HR Dashboard' : activeContent === 'dashboard-form' ? 'New Dashboard' : activeContent === 'recruitment-dashboard-form' ? 'New Recruitment Dashboard' : activeContent === 'dashboard-details' ? 'Dashboard Details' : activeContent === 'recruitment-dashboard' ? 'Recruitment Dashboard' : activeContent === 'recruitment-details' ? 'Recruitment Details' : activeContent === 'recruitment' ? 'Recruitment' : activeContent === 'lifecycle' ? 'Lifecycle' : activeContent === 'lifecycle-dashboard' ? 'Employee Lifecycle Dashboard' : activeContent === 'lifecycle-dashboard-form' ? 'New Lifecycle Dashboard' : activeContent === 'lifecycle-details' ? 'Employee Lifecycle Details' : activeContent === 'attendance-dashboard' ? 'Attendance Dashboard' : activeContent === 'attendance-dashboard-form' ? 'New Attendance Dashboard' : activeContent === 'attendance-details' ? 'Attendance Details' : activeContent === 'attendance' ? 'Attendance' : activeContent === 'attendance-form' ? 'New Attendance' : activeContent?.startsWith('attendance-edit-') ? 'Edit Attendance' : activeContent === 'expense-claims-dashboard' ? 'Expense Claims Dashboard' : activeContent === 'expense-claims-dashboard-form' ? 'New Expense Claims Dashboard' : activeContent === 'expense-claims-details' ? 'Expense Claims Details' : activeContent === 'expense-claims' ? 'Expense Claims' : activeContent === 'expense-claim-form' ? 'New Expense Claim' : activeContent?.startsWith('expense-claim-edit-') ? 'Edit Expense Claim' : activeContent === 'employee-advance' ? 'Employee Advance' : activeContent === 'employee-advance-form' ? 'New Employee Advance' : activeContent?.startsWith('employee-advance-edit-') ? 'Edit Employee Advance' : activeContent === 'job-opening' ? 'Job Opening' : activeContent === 'job-applicant' ? 'Job Applicant' : activeContent === 'job-offer' ? 'Job Offer' : activeContent === 'job-opening-form' ? 'New Job Opening' : activeContent === 'job-applicant-form' ? 'Add Job Applicant' : activeContent === 'job-offer-form' ? 'Send Job Offer' : activeContent === 'employee-onboarding' ? 'Employee Onboarding' : activeContent === 'employee-onboarding-form' ? 'New Employee Onboarding' : activeContent?.startsWith('employee-onboarding-edit-') ? 'Edit Employee Onboarding' : activeContent === 'employee-separation' ? 'Employee Separation' : activeContent === 'employee-separation-form' ? 'New Employee Separation' : activeContent?.startsWith('employee-separation-edit-') ? 'Edit Employee Separation' : activeContent === 'employee-grievance' ? 'Employee Grievance' : activeContent === 'employee-grievance-form' ? 'New Employee Grievance' : activeContent?.startsWith('employee-grievance-edit-') ? 'Edit Employee Grievance' : activeContent === 'performance' ? 'Performance' : activeContent === 'appraisal' ? 'Appraisal' : activeContent === 'appraisal-form' ? 'New Appraisal' : activeContent?.startsWith('appraisal-edit-') ? 'Edit Appraisal' : activeContent === 'performance-feedback' ? 'Employee Performance Feedback' : activeContent === 'performance-feedback-form' ? 'New Performance Feedback' : activeContent?.startsWith('performance-feedback-edit-') ? 'Edit Performance Feedback' : activeContent === 'goal' ? 'Goal' : activeContent === 'goal-form' ? 'New Goal' : activeContent?.startsWith('goal-edit-') ? 'Edit Goal' : activeContent === 'shift-schedule' ? 'Shift Schedule' : activeContent === 'shift-schedule-form' ? 'New Shift Request' : activeContent?.startsWith('shift-schedule-edit-') ? 'Edit Shift Request' : activeContent === 'shift-request' ? 'Shift Request' : activeContent === 'shift-request-form' ? 'New Shift Request' : activeContent?.startsWith('shift-request-edit-') ? 'Edit Shift Request' : activeContent === 'shift-attendance' ? 'Shift & Attendance' : activeContent === 'leaves' ? 'Leaves' : activeContent === 'leave-allocation' ? 'Leave Allocation' : activeContent === 'projects' ? 'Projects' : activeContent === 'users' ? 'Users' : activeContent === 'user' ? 'User' : activeContent === 'user-form' ? 'New User' : activeContent?.startsWith('user-edit-') ? 'Edit User' : activeContent === 'user-type' ? 'User Type' : activeContent === 'role' ? 'Role' : activeContent === 'role-form' ? 'New Role' : activeContent?.startsWith('role-edit-') ? 'Edit Role' : activeContent === 'permission-manager' ? 'Permission Manager' : activeContent === 'user-profile' ? 'User Profile' : activeContent === 'user-settings' ? 'User Settings' : activeContent === 'website' ? 'Website' : activeContent === 'payroll' ? 'Payroll' : activeContent === 'salary-payout' ? 'Salary Payout' : activeContent === 'tax-and-payout' ? 'Tax & Payout' : activeContent === 'tools' ? 'Tools' : activeContent === 'erpnext-settings' ? 'ERPNext Settings' : activeContent === 'integrations' ? 'Integrations' : activeContent === 'erpnext-integrations' ? 'ERPNext Integrations' : activeContent === 'build' ? 'Build' : activeContent === 'hr-settings' ? 'HR Settings' : activeContent === 'holiday-list' ? 'Holiday List' : activeContent === 'employee-list' ? 'Employee' : activeContent === 'employee' ? 'New Employee' : activeContent === 'leave-type' ? 'New Leave Type' : activeContent === 'leave-allocation' ? 'New Leave Allocation' : activeContent === 'leave-application' ? 'New Leave Application' : activeContent === 'leave-application-list' ? 'Leave Applications' : 'Dashboard'}
+              </h1>
+            </div>
+            
+            {/* Action Buttons - Show for HR Settings */}
+            {activeContent === 'hr-settings' && (
+              <div className="flex items-center space-x-2">
+                {/* Three Dots Menu Button with Dropdown */}
+                <div className="relative">
+                  <button 
+                    onClick={() => setShowThreeDotsDropdown(!showThreeDotsDropdown)}
+                    className="p-2 text-gray-600 hover:text-gray-900 bg-gray-200 rounded-lg transition-colors border border-gray-300 bg-grey "
+                  >
+                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
+                    </svg>
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {showThreeDotsDropdown && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                      <div className="px-3 py-2 flex items-center justify-between hover:bg-gray-50 cursor-pointer">
+                        <span className="text-sm text-gray-700">Email</span>
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Ctrl+E</span>
+                      </div>
+                      <div className="px-3 py-2 flex items-center justify-between hover:bg-gray-50 cursor-pointer">
+                        <span className="text-sm text-gray-700">Jump to field</span>
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Ctrl+J</span>
+                      </div>
+                      <div className="px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                        <span className="text-sm text-gray-700">Copy to Clipboard</span>
+                      </div>
+                      <div className="px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                        <span className="text-sm text-gray-700">Reload</span>
+                      </div>
+                      <div className="px-3 py-2 flex items-center justify-between hover:bg-gray-50 cursor-pointer">
+                        <span className="text-sm text-gray-700">Remind Me</span>
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded flex items-center">
+                          <svg className="h-3 w-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+                          </svg>
+                          +R
+                        </span>
+                      </div>
+                      <div className="px-3 py-2 flex items-center justify-between hover:bg-gray-50 cursor-pointer">
+                        <span className="text-sm text-gray-700">Undo</span>
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Ctrl+Z</span>
+                      </div>
+                      <div className="px-3 py-2 flex items-center justify-between hover:bg-gray-50 cursor-pointer">
+                        <span className="text-sm text-gray-700">Redo</span>
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Ctrl+Y</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Save Button */}
+                <button className="px-3 py-2 bg-gray-800 text-white text-sm font-medium rounded-lg hover:bg-gray-900 transition-colors">
+                  Save
+                </button>
+              </div>
+            )}
+            
+            {/* Save Button Only for Employee, Leave Type, Leave Allocation, Leave Application, and Dashboard Form */}
+            {(activeContent === 'employee' || activeContent === 'leave-type' || activeContent === 'leave-allocation' || activeContent === 'leave-application' || activeContent === 'dashboard-form') && (
+              <button 
+                onClick={() => {
+                  // Dispatch event to save form
+                  window.dispatchEvent(new CustomEvent('saveEmployeeForm'));
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800 transition-colors"
+              >
+                Save
+              </button>
+            )}
+            </div>
+    </header>
+  );
+}
