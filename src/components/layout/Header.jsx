@@ -517,7 +517,7 @@ export default function Header({ isSidebarOpen, setIsSidebarOpen, activeContent 
             )}
             
             {/* Save Button Only for Employee, Leave Type, Leave Allocation, Leave Application, and Dashboard Form */}
-            {(activeContent === 'employee' || activeContent === 'leave-type' || activeContent === 'leave-allocation' || activeContent === 'leave-application' || activeContent === 'dashboard-form') && (
+            {(activeContent === 'employee' || activeContent === 'leave-allocation' || activeContent === 'leave-application' || activeContent === 'dashboard-form') && (
               <button 
                 onClick={() => {
                   // Dispatch event to save form

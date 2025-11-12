@@ -1,253 +1,464 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Plus, Edit3 } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Plus, Trash2, Loader2, RefreshCcw, CalendarPlus } from 'lucide-react';
+import { holidayListAPI } from '../../../../lib/api';
+
+const COLOR_SWATCHES = [
+  '#3B82F6', '#F59E0B', '#10B981', '#8B5CF6', '#EF4444',
+  '#EC4899', '#22C55E', '#2563EB', '#F97316', '#0EA5E9',
+  '#06B6D4', '#84CC16'
+];
+
+const createRow = () => ({ id: `${Date.now()}-${Math.random()}`, date: '', description: '' });
 
 export default function HolidayList() {
   const [holidayListName, setHolidayListName] = useState('');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
-  const [totalHolidays, setTotalHolidays] = useState(0);
   const [selectedColor, setSelectedColor] = useState('#3B82F6');
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [holidays, setHolidays] = useState([createRow()]);
+  const [totalHolidays, setTotalHolidays] = useState(holidays.length);
 
-  const colorSwatches = [
-    '#3B82F6', '#F59E0B', '#10B981', '#8B5CF6', '#EF4444',
-    '#EC4899', '#22C55E', '#2563EB', '#F97316', '#0EA5E9',
-    '#06B6D4', '#84CC16'
-  ];
+  useEffect(() => {
+    setTotalHolidays(holidays.length);
+  }, [holidays]);
+
+  const cleanHolidays = useMemo(() => {
+    return holidays
+      .map(({ date, description }) => {
+        if (!date || !description.trim()) {
+          return null;
+        }
+
+        const parsed = new Date(date);
+        if (Number.isNaN(parsed.getTime())) {
+          return null;
+        }
+
+        return {
+          date: parsed.toISOString(),
+          description: description.trim(),
+        };
+      })
+      .filter(Boolean);
+  }, [holidays]);
+
+  const [alert, setAlert] = useState({ type: '', message: '' });
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingLists, setIsLoadingLists] = useState(false);
+  const [holidayLists, setHolidayLists] = useState([]);
+
+  const clearAlert = useCallback(() => setAlert({ type: '', message: '' }), []);
+
+  const showAlert = useCallback((type, message) => {
+    setAlert({ type, message });
+    setTimeout(clearAlert, 4000);
+  }, [clearAlert]);
+
+  useEffect(() => {
+    if (showColorPicker) {
+      const handleEsc = (event) => {
+        if (event.key === 'Escape') {
+          setShowColorPicker(false);
+        }
+      };
+      document.addEventListener('keydown', handleEsc);
+      return () => document.removeEventListener('keydown', handleEsc);
+    }
+    return undefined;
+  }, [showColorPicker]);
+
+  const fetchHolidayLists = useCallback(async () => {
+    try {
+      setIsLoadingLists(true);
+      const response = await holidayListAPI.getAll({ limit: 50 });
+      if (response?.success && Array.isArray(response.data)) {
+        setHolidayLists(response.data);
+      } else {
+        setHolidayLists([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch holiday lists:', error);
+      showAlert('error', error.message || 'Failed to load holiday lists.');
+      setHolidayLists([]);
+    } finally {
+      setIsLoadingLists(false);
+    }
+  }, [showAlert]);
+
+  useEffect(() => {
+    fetchHolidayLists();
+  }, [fetchHolidayLists]);
+
+  const resetForm = () => {
+    setHolidayListName('');
+    setFromDate('');
+    setToDate('');
+    setSelectedColor('#3B82F6');
+    setHolidays([createRow()]);
+    setShowColorPicker(false);
+  };
+
+  const addHolidayRow = () => {
+    setHolidays((prev) => [...prev, createRow()]);
+    setTotalHolidays((prev) => prev + 1);
+  };
+
+  const removeHolidayRow = (id) => {
+    setHolidays((prev) => {
+      if (prev.length <= 1) {
+        return prev;
+      }
+      const updated = prev.filter((row) => row.id !== id);
+      setTotalHolidays(updated.length);
+      return updated;
+    });
+  };
+
+  const updateHolidayRow = (id, field, value) => {
+    setHolidays((prev) => prev.map((row) => (row.id === id ? { ...row, [field]: value } : row)));
+  };
+
+  const validate = () => {
+    if (!holidayListName.trim()) {
+      showAlert('error', 'Holiday List Name is required.');
+      return false;
+    }
+
+    if (!fromDate) {
+      showAlert('error', 'From Date is required.');
+      return false;
+    }
+
+    if (!toDate) {
+      showAlert('error', 'To Date is required.');
+      return false;
+    }
+
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
+    if (from > to) {
+      showAlert('error', 'To Date must be on or after From Date.');
+      return false;
+    }
+    
+    return true;
+  };
+
+  const handleSave = async () => {
+    if (isSaving) return;
+    if (!validate()) return;
+
+    const payload = {
+      holidayListName: holidayListName.trim(),
+      fromDate: new Date(fromDate).toISOString(),
+      toDate: new Date(toDate).toISOString(),
+      color: selectedColor,
+      totalHolidays: cleanHolidays.length,
+      holidays: cleanHolidays,
+    };
+
+    try {
+      setIsSaving(true);
+      const response = await holidayListAPI.create(payload);
+      if (response?.success) {
+        showAlert('success', 'Holiday list saved successfully.');
+        resetForm();
+        if (response.data) {
+          setHolidayLists((prev) => [response.data, ...prev]);
+        } else {
+          fetchHolidayLists();
+        }
+      } else {
+        showAlert('error', 'Failed to save holiday list.');
+      }
+    } catch (error) {
+      console.error('Failed to save holiday list:', error);
+      showAlert('error', error.message || 'Failed to save holiday list.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const populatedHolidayLists = useMemo(() => holidayLists || [], [holidayLists]);
 
   return (
     <div className="p-10 bg-gray-50 min-h-full">
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          
-          {/* Form Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {/* Left Column */}
-            <div className="space-y-6">
-              {/* Holiday List Name */}
-              <div>
-                <label htmlFor="holiday-list-name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Holiday List Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="holiday-list-name"
-                  value={holidayListName}
-                  onChange={(e) => setHolidayListName(e.target.value)}
-                  className="w-full px-3 py-1  rounded-md bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder=""
-                />
-              </div>
-
-              {/* From Date */}
-              <div>
-                <label htmlFor="from-date" className="block text-sm font-medium text-gray-700 mb-1">
-                  From Date <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  id="from-date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  className="w-full px-3 py-1 rounded-md bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              {/* To Date */}
-              <div>
-                <label htmlFor="to-date" className="block text-sm font-medium text-gray-700 mb-1">
-                  To Date <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  id="to-date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                  className="w-full px-3 py-1  rounded-md bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-
-            {/* Right Column */}
-            <div>
-              {/* Total Holidays */}
-              <div>
-                <label htmlFor="total-holidays" className="block text-sm font-medium text-gray-700 mb-1">
-                  Total Holidays
-                </label>
-                <input
-                  type="number"
-                  id="total-holidays"
-                  value={totalHolidays}
-                  readOnly
-                  className="w-full px-3 py-1  rounded-md bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-600"
-                />
-              </div>
-            </div>
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900 flex items-center space-x-2">
+              <CalendarPlus className="h-6 w-6 text-blue-500" />
+              <span>Holiday List</span>
+            </h1>
+            <p className="text-sm text-gray-600">Create and manage holiday lists that can be assigned to employees.</p>
           </div>
-
-          {/* Border Separator */}
-          <div className="border-t border-gray-200 my-6"></div>
-
-          {/* Holidays Section */}
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Holidays</h2>
-            
-            {/* Holidays Label */}
-            <p className="text-sm text-gray-600 mb-3">Holidays</p>
-
-            {/* Table */}
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="w-12 px-4 py-3 text-left">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                      />
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      No.
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date <span className="text-red-500">*</span>
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Description <span className="text-red-500">*</span>
-                    </th>
-                    <th scope="col" className="w-12 px-4 py-3 text-center">
-                      <button className="text-gray-400 hover:text-gray-600">
-                        <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                        </svg>
-                      </button>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  <tr>
-                    <td colSpan="5" className="px-4 py-16 text-center">
-                      <div className="flex flex-col items-center justify-center">
-                        <svg className="h-12 w-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <p className="text-gray-500 text-sm">No Data</p>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col space-y-2 mt-4">
-              <button className="px-3 py-1.5 text-xs text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors text-left w-fit">
-                Add Row
-              </button>
-              <button className="px-3 py-1.5 text-xs text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors text-left w-fit">
-                Clear Table
-              </button>
-            </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={fetchHolidayLists}
+              className="inline-flex items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              disabled={isLoadingLists}
+            >
+              {isLoadingLists && <Loader2 className="h-4 w-4 animate-spin" />}
+              <RefreshCcw className="h-4 w-4" />
+              <span>Refresh</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              className="inline-flex items-center gap-2 rounded-md bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-600"
+              disabled={isSaving}
+            >
+              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              <span>{isSaving ? 'Saving…' : 'Save Holiday List'}</span>
+            </button>
           </div>
+        </div>
 
-          {/* Border Separator */}
-          <div className="border-t border-gray-200 my-10"></div>
+        {alert.message && (
+          <div
+            className={`rounded-md px-4 py-3 text-sm font-medium ${
+              alert.type === 'success'
+                ? 'bg-green-50 text-green-700 border border-green-200'
+                : 'bg-red-50 text-red-700 border border-red-200'
+            }`}
+          >
+            {alert.message}
+          </div>
+        )}
 
-          {/* Color Section */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Color
-            </label>
-            <div className="relative max-w-md">
-              <div
-                onClick={() => setShowColorPicker(!showColorPicker)}
-                className="flex items-center w-full pl-3  py-1 border border-gray-300 rounded-md bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
-              >
-                <div
-                  className="w-6 h-6 rounded-full border-2 border-white shadow-sm mr-3 flex-shrink-0"
-                  style={{ backgroundColor: selectedColor }}
-                ></div>
-                <span className="text-gray-500 text-sm">Choose a color</span>
-              </div>
-
-              {/* Color Picker Dropdown */}
-              {showColorPicker && (
-                <div className="absolute z-50 bottom-full mb-2 p-4 bg-white rounded-lg shadow-xl border border-gray-200 w-80">
-                  {/* Swatches Section */}
-                  <div className="mb-4">
-                    <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3">Swatches</h4>
-                    <div className="grid grid-cols-6 gap-2">
-                      {colorSwatches.map((color) => (
-                        <button
-                          key={color}
-                          onClick={() => {
-                            setSelectedColor(color);
-                            setShowColorPicker(false);
-                          }}
-                          className="w-10 h-10 rounded-full border-2 border-white shadow-sm hover:scale-110 transition-transform"
-                          style={{ backgroundColor: color }}
-                        ></button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Color Picker Section */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="xl:col-span-2 space-y-6">
+            <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-6">
                   <div>
-                    <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3">Color Picker</h4>
-                    <div className="space-y-3">
-                      {/* Color Gradient Box */}
-                      <div className="relative w-full h-48 rounded-lg overflow-hidden cursor-crosshair"
-                        style={{
-                          background: `linear-gradient(to bottom, transparent, black),
-                                      linear-gradient(to right, white, ${selectedColor})`
-                        }}
+                    <label htmlFor="holiday-list-name" className="block text-sm font-medium text-gray-700 mb-1">
+                      Holiday List Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="holiday-list-name"
+                      value={holidayListName}
+                      onChange={(e) => setHolidayListName(e.target.value)}
+                      className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="E.g. 2025 Public Holidays"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="from-date" className="block text-sm font-medium text-gray-700 mb-1">
+                      From Date <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      id="from-date"
+                      value={fromDate}
+                      onChange={(e) => setFromDate(e.target.value)}
+                      className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="to-date" className="block text-sm font-medium text-gray-700 mb-1">
+                      To Date <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      id="to-date"
+                      value={toDate}
+                      onChange={(e) => setToDate(e.target.value)}
+                      className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Total Holidays</label>
+                    <input
+                      type="number"
+                      value={totalHolidays}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value, 10);
+                        if (Number.isNaN(value) || value <= 0) {
+                          return;
+                        }
+                        const difference = value - holidays.length;
+                        if (difference > 0) {
+                          setHolidays((prev) => [
+                            ...prev,
+                            ...Array.from({ length: difference }, () => createRow()),
+                          ]);
+                        } else if (difference < 0) {
+                          setHolidays((prev) => prev.slice(0, value));
+                        }
+                        setTotalHolidays(value);
+                      }}
+                      className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      min={1}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
+                    <div className="relative max-w-xs">
+                      <button
+                        type="button"
+                        onClick={() => setShowColorPicker((prev) => !prev)}
+                        className="flex w-full items-center rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100"
                       >
-                      </div>
-
-                      {/* Hue Slider */}
-                      <input
-                        type="range"
-                        min="0"
-                        max="360"
-                        onChange={(e) => {
-                          const hue = e.target.value;
-                          const color = `hsl(${hue}, 100%, 50%)`;
-                          setSelectedColor(color);
-                        }}
-                        className="w-full h-3 rounded-lg cursor-pointer"
-                        style={{
-                          background: 'linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)',
-                          appearance: 'none',
-                          outline: 'none'
-                        }}
-                      />
+                        <span
+                          className="mr-3 h-6 w-6 rounded-full border-2 border-white shadow"
+                          style={{ backgroundColor: selectedColor }}
+                        />
+                        <span>Select a color</span>
+                      </button>
+                      {showColorPicker && (
+                        <div className="absolute z-30 mt-2 w-64 rounded-lg border border-gray-200 bg-white p-4 shadow-lg">
+                          <div className="grid grid-cols-6 gap-2">
+                            {COLOR_SWATCHES.map((color) => (
+                              <button
+                                type="button"
+                                key={color}
+                                onClick={() => {
+                                  setSelectedColor(color);
+                                  setShowColorPicker(false);
+                                }}
+                                className="h-8 w-8 rounded-full border-2 border-white shadow-sm hover:scale-110 transition-transform"
+                                style={{ backgroundColor: color }}
+                              />
+                            ))}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setShowColorPicker(false)}
+                            className="mt-4 w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                          >
+                            Close
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
+                </div>
+              </div>
 
-                  {/* Close Button */}
+              <div className="border-t border-gray-200" />
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-base font-semibold text-gray-900">Holidays</h2>
+                    <p className="text-sm text-gray-600">Add the specific dates and descriptions that belong to this list.</p>
+                  </div>
                   <button
-                    onClick={() => setShowColorPicker(false)}
-                    className="mt-4 w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-sm font-medium"
+                    type="button"
+                    onClick={addHolidayRow}
+                    className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
                   >
-                    Close
+                    <Plus className="h-4 w-4" />
+                    <span>Add Row</span>
                   </button>
+                </div>
+
+                <div className="overflow-hidden rounded-lg border border-gray-200">
+                  <table className="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead className="bg-gray-50 text-xs font-medium uppercase tracking-wider text-gray-500">
+                      <tr>
+                        <th className="px-4 py-3 text-left w-1/5">Date</th>
+                        <th className="px-4 py-3 text-left">Description</th>
+                        <th className="px-4 py-3 text-center w-12">Remove</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 bg-white">
+                      {holidays.map((row, index) => (
+                        <tr key={row.id}>
+                          <td className="px-4 py-2 align-top">
+                            <input
+                              type="date"
+                              value={row.date}
+                              onChange={(e) => updateHolidayRow(row.id, 'date', e.target.value)}
+                              className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </td>
+                          <td className="px-4 py-2 align-top">
+                            <textarea
+                              value={row.description}
+                              onChange={(e) => updateHolidayRow(row.id, 'description', e.target.value)}
+                              rows={2}
+                              placeholder={`Holiday ${index + 1}`}
+                              className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </td>
+                          <td className="px-4 py-2 text-center align-top">
+                            <button
+                              type="button"
+                              onClick={() => removeHolidayRow(row.id)}
+                              className="rounded-md border border-gray-200 p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-40"
+                              disabled={holidays.length <= 1}
+                              title="Remove row"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setHolidays([createRow()])}
+                    className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    disabled={holidays.length <= 1 && !holidays[0].date && !holidays[0].description}
+                  >
+                    Clear Table
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="rounded-lg border border-gray-200 bg-white p-6">
+              <h2 className="text-base font-semibold text-gray-900">Existing Holiday Lists</h2>
+              <p className="text-sm text-gray-600">Recently created holiday lists are shown here.</p>
+
+              {isLoadingLists ? (
+                <div className="flex items-center justify-center py-12 text-gray-500">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span className="ml-2 text-sm">Loading…</span>
+                </div>
+              ) : populatedHolidayLists.length === 0 ? (
+                <div className="py-12 text-center text-sm text-gray-500">
+                  No holiday lists yet. Create your first list using the form.
+                </div>
+              ) : (
+                <div className="mt-4 space-y-3">
+                  {populatedHolidayLists.map((list) => (
+                    <div key={list._id} className="rounded-md border border-gray-200 p-3 hover:border-blue-300 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">{list.holidayListName}</p>
+                          <p className="text-xs text-gray-500">
+                            {list.totalHolidays ?? list.holidays?.length ?? 0} holidays ·{' '}
+                            {list.fromDate ? new Date(list.fromDate).toLocaleDateString() : '—'} -{' '}
+                            {list.toDate ? new Date(list.toDate).toLocaleDateString() : '—'}
+                          </p>
+                        </div>
+                        <span
+                          className="inline-block h-4 w-4 rounded-full border border-gray-200"
+                          style={{ backgroundColor: list.color || '#3B82F6' }}
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
-
-            {/* Click outside to close */}
-            {showColorPicker && (
-              <div
-                className="fixed inset-0 z-40"
-                onClick={() => setShowColorPicker(false)}
-              ></div>
-            )}
           </div>
-
-        
         </div>
       </div>
     </div>

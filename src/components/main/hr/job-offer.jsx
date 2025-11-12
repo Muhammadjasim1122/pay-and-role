@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, Filter, MoreVertical, FileText, CheckCircle, Pencil, Trash2, Eye } from 'lucide-react';
 import { useRecruitment } from '../../../contexts/RecruitmentContext';
 
@@ -13,6 +13,13 @@ export default function JobOffer() {
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertAction, setAlertAction] = useState(null);
+  const [feedback, setFeedback] = useState({ type: '', message: '' });
+
+  useEffect(() => {
+    if (!feedback.message) return;
+    const timer = setTimeout(() => setFeedback({ type: '', message: '' }), 3500);
+    return () => clearTimeout(timer);
+  }, [feedback]);
 
   const handleViewDetails = (id) => {
     setOpenDropdown(null);
@@ -25,9 +32,16 @@ export default function JobOffer() {
   const handleDelete = (id) => {
     setOpenDropdown(null);
     setAlertMessage('Are you sure you want to delete this job offer?');
-    setAlertAction(() => () => {
-      deleteJobOffer(id);
-      setAlertOpen(false);
+    setAlertAction(() => async () => {
+      try {
+        await deleteJobOffer(id);
+        setFeedback({ type: 'success', message: 'Job offer deleted successfully.' });
+      } catch (error) {
+        console.error('Failed to delete job offer:', error);
+        setFeedback({ type: 'error', message: error.message || 'Failed to delete job offer. Please try again.' });
+      } finally {
+        setAlertOpen(false);
+      }
     });
     setAlertOpen(true);
   };
@@ -59,6 +73,17 @@ export default function JobOffer() {
   return (
     <div className="p-6 bg-gray-50 min-h-full">
       <div className="max-w-7xl mx-auto">
+        {feedback.message && (
+          <div
+            className={`mb-4 rounded-md border px-4 py-2 text-sm font-medium ${
+              feedback.type === 'error'
+                ? 'border-red-200 bg-red-50 text-red-700'
+                : 'border-green-200 bg-green-50 text-green-700'
+            }`}
+          >
+            {feedback.message}
+          </div>
+        )}
         {/* Header */}
         <div className="mb-6 flex justify-between items-center">
           <div>
@@ -140,7 +165,7 @@ export default function JobOffer() {
                 {filteredOffers.map((offer) => (
                   <tr key={offer.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {offer.id}
+                      {offer.displayId || offer.sequence || offer.id}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{offer.candidate}</div>

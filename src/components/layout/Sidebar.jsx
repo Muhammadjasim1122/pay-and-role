@@ -22,7 +22,8 @@ import {
   Hammer,
   FileText,
   UserPlus,
-  ArrowUpRight
+  ArrowUpRight,
+  CalendarDays
 } from 'lucide-react';
 
 export default function Sidebar({ isOpen, setIsOpen, setActiveContent, activeContent }) {   // ✅ props passed from parent
@@ -110,7 +111,8 @@ export default function Sidebar({ isOpen, setIsOpen, setActiveContent, activeCon
       hammer: <Hammer {...commonProps} />,
       'file-text': <FileText {...commonProps} />,
       'user-plus': <UserPlus {...commonProps} />,
-      'arrow-up-right': <ArrowUpRight {...commonProps} />
+      'arrow-up-right': <ArrowUpRight {...commonProps} />,
+      calendar: <CalendarDays {...commonProps} />
     };
     return map[iconName] || null;
   };
@@ -171,6 +173,17 @@ export default function Sidebar({ isOpen, setIsOpen, setActiveContent, activeCon
         >
           {getIcon('users', 14)}
           <span>Employee</span>
+        </button>
+        <button 
+          onClick={() => setActiveContent('holiday-list')}
+          className={`w-full flex items-center space-x-2 px-3 py-1.5 text-[13px] transition-all duration-200 ease-in-out rounded-md ${
+            isContentActive('holiday-list')
+              ? 'bg-gray-200 text-gray-800'
+              : 'text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          {getIcon('calendar', 14)}
+          <span>Holiday List</span>
         </button>
                     <button 
                       onClick={() => setActiveContent('leave-application-list')}

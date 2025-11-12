@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { 
   Plus, 
   Edit3, 
@@ -21,11 +21,13 @@ import {
   Link as LinkIcon
 } from 'lucide-react';
 import { useEmployee } from '../../../../contexts/EmployeeContext';
+import { holidayListAPI } from '../../../../lib/api';
 
 export default function Employee() {
-  const { addEmployee } = useEmployee();
+  const { addEmployee, updateEmployee } = useEmployee();
   const [activeTab, setActiveTab] = useState('overview');
   const [series, setSeries] = useState('HR-EMP-');
+  const [editingEmployeeId, setEditingEmployeeId] = useState(null);
   const [firstName, setFirstName] = useState('');
   const [middleName, setMiddleName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -39,10 +41,349 @@ export default function Employee() {
   const [showSaveAlert, setShowSaveAlert] = useState(false);
   const [showValidationError, setShowValidationError] = useState(false);
   const [validationMessage, setValidationMessage] = useState('');
+  const [missingFields, setMissingFields] = useState([]);
   const [touched, setTouched] = useState({});
   
-  // Handle save
-  const handleSave = () => {
+  // Field name to ID mapping for scrolling
+  const fieldIdMap = {
+    'First Name': 'first-name',
+    'Gender': 'gender',
+    'Date of Birth': 'date-of-birth',
+    'Date of Joining': 'date-of-joining',
+  };
+  
+  // Function to scroll to field
+  const scrollToField = (fieldName) => {
+    const fieldId = fieldIdMap[fieldName];
+    if (fieldId) {
+      const element = document.getElementById(fieldId);
+      if (element) {
+        // Ensure the Overview tab is active (Date of Joining is in Overview tab)
+        if (fieldName === 'Date of Joining' && activeTab !== 'overview') {
+          setActiveTab('overview');
+          // Wait for tab to switch before scrolling
+          setTimeout(() => {
+            scrollToField(fieldName);
+          }, 100);
+          return;
+        }
+        
+        // Scroll to the element
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Focus the element and highlight
+        setTimeout(() => {
+          element.focus();
+          // Add a highlight effect
+          element.style.transition = 'all 0.3s ease';
+          element.classList.add('ring-2', 'ring-red-500', 'ring-offset-2');
+          setTimeout(() => {
+            element.classList.remove('ring-2', 'ring-red-500', 'ring-offset-2');
+          }, 3000);
+        }, 300);
+      } else {
+        console.warn(`Field with ID "${fieldId}" not found`);
+      }
+    } else {
+      console.warn(`Field name "${fieldName}" not found in fieldIdMap`);
+    }
+  };
+  
+  // Handle clicking on error message
+  const handleErrorClick = () => {
+    if (missingFields.length > 0) {
+      // Scroll to the first missing field
+      scrollToField(missingFields[0]);
+    }
+  };
+  
+  // Helper function to safely parse dates
+  const parseDate = (dateValue) => {
+    if (!dateValue) return null;
+
+    const value = typeof dateValue === 'string' ? dateValue.trim() : dateValue;
+
+    // If it's already a valid Date object
+    if (value instanceof Date && !isNaN(value.getTime())) {
+      return value.toISOString();
+    }
+
+    if (typeof value === 'string') {
+      // Normalise separators
+      const normalised = value.replace(/\//g, '-');
+
+      // Try parsing as ISO or YYYY-MM-DD directly
+      const directDate = new Date(normalised);
+      if (!isNaN(directDate.getTime())) {
+        return directDate.toISOString();
+      }
+
+      if (normalised.includes('-')) {
+        const parts = normalised.split('-');
+        if (parts.length === 3) {
+          // Handle DD-MM-YYYY or YYYY-MM-DD by inspecting part lengths
+          let year;
+          let month;
+          let day;
+
+          if (parts[0].length === 4) {
+            // YYYY-MM-DD
+            year = parseInt(parts[0], 10);
+            month = parseInt(parts[1], 10);
+            day = parseInt(parts[2], 10);
+          } else {
+            // Assume DD-MM-YYYY
+            day = parseInt(parts[0], 10);
+            month = parseInt(parts[1], 10);
+            year = parseInt(parts[2], 10);
+          }
+
+          if (
+            !isNaN(day) &&
+            !isNaN(month) &&
+            !isNaN(year) &&
+            day > 0 &&
+            day <= 31 &&
+            month > 0 &&
+            month <= 12
+          ) {
+            const parsedDate = new Date(year, month - 1, day);
+            if (!isNaN(parsedDate.getTime())) {
+              return parsedDate.toISOString();
+            }
+          }
+        }
+      }
+    }
+
+    console.warn(`Invalid date value: ${dateValue}`);
+    return null;
+  };
+
+  // Helper function to clean data - remove undefined and empty string values
+  const cleanData = (obj) => {
+    const cleaned = {};
+    for (const key in obj) {
+      if (obj[key] !== undefined && obj[key] !== '' && obj[key] !== null) {
+        cleaned[key] = obj[key];
+      }
+    }
+    return cleaned;
+  };
+
+  const formatDateInput = useCallback((value) => {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toISOString().split('T')[0];
+  }, []);
+
+  const resetFormFields = useCallback(() => {
+    setEditingEmployeeId(null);
+    setActiveTab('overview');
+    setSeries('HR-EMP-');
+    setFirstName('');
+    setMiddleName('');
+    setLastName('');
+    setGender('');
+    setDateOfBirth('');
+    setSalutation('');
+    setDateOfJoining('');
+    setStatus('Active');
+    setShowSaveAlert(false);
+    setShowValidationError(false);
+    setValidationMessage('');
+    setMissingFields([]);
+    setTouched({});
+    setJobApplicant('');
+    setOfferDate('');
+    setConfirmationDate('');
+    setContractEndDate('');
+    setNoticeDays('');
+    setDateOfRetirement('');
+    setMobile('');
+    setPersonalEmail('');
+    setPreferredContactEmail('');
+    setCompanyEmail('');
+    setUnsubscribed(false);
+    setCurrentAddress('');
+    setPermanentAddress('');
+    setEmergencyContactName('');
+    setEmergencyPhone('');
+    setRelation('');
+    setAttendanceDeviceId('');
+    setHolidayList('');
+    setHolidayListId('');
+    setShowHolidaySuggestions(false);
+    setApplicableHolidayList('');
+    setApplicableHolidayListId('');
+    setShowApplicableHolidaySuggestions(false);
+    setHolidayListError('');
+    setDefaultShift('');
+    setExpenseApprover('');
+    setShiftRequestApprover('');
+    setLeaveApprover('');
+    setCostToCompany('');
+    setPayrollCostCenter('');
+    setSalaryCurrency('PKR');
+    setSalaryMode('');
+    setMaritalStatus('');
+    setBloodGroup('');
+    setFamilyBackground('');
+    setHealthDetails('');
+    setHealthInsuranceProvider('');
+    setPassportNumber('');
+    setDateOfIssue('');
+    setValidUpto('');
+    setPlaceOfIssue('');
+    setBioCoverLetter('');
+    setResignationLetterDate('');
+    setExitInterviewHeldOn('');
+    setLeaveEncashed('');
+    setRelievingDate('');
+    setNewWorkplace('');
+    setReasonForLeaving('');
+    setExitFeedback('');
+    setShowToDoDialog(false);
+    setAssignToMe(false);
+    setAssignTo('');
+    setAssignToUserGroup('');
+    setCompleteBy('');
+    setPriority('Medium');
+    setTodoComment('');
+    setShowUploadDialog(false);
+    setUploadFiles([]);
+    setIsPrivate(false);
+    setIsDragging(false);
+    setShowShareDialog(false);
+    setShareUser('');
+    setShowUserSuggestions(false);
+    setSharedUsers([
+      {
+        name: 'Everyone',
+        canRead: false,
+        canWrite: false,
+        canSubmit: true,
+        canShare: false,
+      },
+    ]);
+    setShowDeleteConfirm(false);
+    setAttachmentToDelete(null);
+  }, []);
+
+  const populateFormFromEmployee = useCallback((employee) => {
+    if (!employee) return;
+    setEditingEmployeeId(employee.id || employee._id || null);
+    setActiveTab('overview');
+    setSeries(employee.series || 'HR-EMP-');
+    setFirstName(employee.firstName || '');
+    setMiddleName(employee.middleName || '');
+    setLastName(employee.lastName || '');
+    setGender(employee.gender || '');
+    setDateOfBirth(formatDateInput(employee.dateOfBirth));
+    setSalutation(employee.salutation || '');
+    setDateOfJoining(formatDateInput(employee.dateOfJoining));
+    setStatus(employee.status || 'Active');
+    setJobApplicant(employee.jobApplicant || '');
+    setOfferDate(formatDateInput(employee.offerDate));
+    setConfirmationDate(formatDateInput(employee.confirmationDate));
+    setContractEndDate(formatDateInput(employee.contractEndDate));
+    setNoticeDays(employee.noticeDays ? String(employee.noticeDays) : '');
+    setDateOfRetirement(formatDateInput(employee.dateOfRetirement));
+    setMobile(employee.mobile || '');
+    setPersonalEmail(employee.personalEmail || '');
+    setPreferredContactEmail(employee.preferredContactEmail || '');
+    setCompanyEmail(employee.companyEmail || '');
+    setUnsubscribed(Boolean(employee.unsubscribed));
+    setCurrentAddress(employee.currentAddress || '');
+    setPermanentAddress(employee.permanentAddress || '');
+    setEmergencyContactName(employee.emergencyContactName || '');
+    setEmergencyPhone(employee.emergencyPhone || '');
+    setRelation(employee.relation || '');
+    setAttendanceDeviceId(employee.attendanceDeviceId || '');
+
+    const rawHolidayList = employee.holidayList;
+    const rawApplicableHolidayList = employee.applicableHolidayList;
+
+    const holidayListName =
+      (rawHolidayList && typeof rawHolidayList === 'object' && (rawHolidayList.holidayListName || rawHolidayList.name)) ||
+      employee.holidayListName ||
+      '';
+    const holidayListIdentifier =
+      (rawHolidayList && typeof rawHolidayList === 'object' && (rawHolidayList._id || rawHolidayList.id)) ||
+      (typeof rawHolidayList === 'string' ? rawHolidayList : '') ||
+      '';
+
+    const applicableHolidayListName =
+      (rawApplicableHolidayList && typeof rawApplicableHolidayList === 'object' && (rawApplicableHolidayList.holidayListName || rawApplicableHolidayList.name)) ||
+      employee.applicableHolidayListName ||
+      '';
+    const applicableHolidayListIdentifier =
+      (rawApplicableHolidayList && typeof rawApplicableHolidayList === 'object' && (rawApplicableHolidayList._id || rawApplicableHolidayList.id)) ||
+      (typeof rawApplicableHolidayList === 'string' ? rawApplicableHolidayList : '') ||
+      '';
+
+    setHolidayList(holidayListName || holidayListIdentifier);
+    setHolidayListId(holidayListIdentifier);
+    setApplicableHolidayList(applicableHolidayListName || applicableHolidayListIdentifier);
+    setApplicableHolidayListId(applicableHolidayListIdentifier);
+    setHolidayListError('');
+    setDefaultShift(employee.defaultShift || '');
+    setExpenseApprover(employee.expenseApprover || '');
+    setShiftRequestApprover(employee.shiftRequestApprover || '');
+    setLeaveApprover(employee.leaveApprover || '');
+    setCostToCompany(
+      employee.costToCompany !== undefined && employee.costToCompany !== null
+        ? String(employee.costToCompany)
+        : ''
+    );
+    setPayrollCostCenter(employee.payrollCostCenter || '');
+    setSalaryCurrency(employee.salaryCurrency || 'PKR');
+    setSalaryMode(employee.salaryMode || '');
+    setMaritalStatus(employee.maritalStatus || '');
+    setBloodGroup(employee.bloodGroup || '');
+    setFamilyBackground(employee.familyBackground || '');
+    setHealthDetails(employee.healthDetails || '');
+    setHealthInsuranceProvider(employee.healthInsuranceProvider || '');
+    setPassportNumber(employee.passportNumber || '');
+    setDateOfIssue(formatDateInput(employee.dateOfIssue));
+    setValidUpto(formatDateInput(employee.validUpto));
+    setPlaceOfIssue(employee.placeOfIssue || '');
+    setBioCoverLetter(employee.bioCoverLetter || '');
+    setResignationLetterDate(formatDateInput(employee.resignationLetterDate));
+    setExitInterviewHeldOn(formatDateInput(employee.exitInterviewHeldOn));
+    setLeaveEncashed(employee.leaveEncashed || '');
+    setRelievingDate(formatDateInput(employee.relievingDate));
+    setNewWorkplace(employee.newWorkplace || '');
+    setReasonForLeaving(employee.reasonForLeaving || '');
+    setExitFeedback(employee.exitFeedback || '');
+    setMissingFields([]);
+    setValidationMessage('');
+    setShowValidationError(false);
+    setTouched({});
+  }, [formatDateInput]);
+
+  useEffect(() => {
+    const handleEditEmployeeEvent = (event) => {
+      const employee = event.detail;
+      if (employee) {
+        populateFormFromEmployee(employee);
+      }
+    };
+
+    const handleCreateEmployeeEvent = () => {
+      resetFormFields();
+    };
+
+    window.addEventListener('editEmployee', handleEditEmployeeEvent);
+    window.addEventListener('createEmployee', handleCreateEmployeeEvent);
+
+    return () => {
+      window.removeEventListener('editEmployee', handleEditEmployeeEvent);
+      window.removeEventListener('createEmployee', handleCreateEmployeeEvent);
+    };
+  }, [populateFormFromEmployee, resetFormFields]);
+
+  const handleSave = async () => {
     // Check required fields
     const missingFields = [];
     if (!firstName.trim()) missingFields.push('First Name');
@@ -51,42 +392,135 @@ export default function Employee() {
     if (!dateOfJoining) missingFields.push('Date of Joining');
     
     if (missingFields.length > 0) {
+      setMissingFields(missingFields); // Store missing fields for scrolling
       setValidationMessage(`Please fill the mandatory fields: ${missingFields.join(', ')}`);
       setShowValidationError(true);
+      
+      // Auto-scroll to first missing field
+      setTimeout(() => {
+        scrollToField(missingFields[0]);
+      }, 100);
+      
+      setTimeout(() => setShowValidationError(false), 5000);
+      return;
+    }
+    
+    const parsedDateOfBirth = parseDate(dateOfBirth);
+    const parsedDateOfJoining = parseDate(dateOfJoining);
+
+    if (!parsedDateOfBirth) {
+      setValidationMessage('Please enter a valid Date of Birth (e.g. 2025-10-22).');
+      setShowValidationError(true);
+      setMissingFields(['Date of Birth']);
+      setTouched((prev) => ({ ...prev, 'Date of Birth': true }));
+      scrollToField('Date of Birth');
+      setTimeout(() => setShowValidationError(false), 5000);
+      return;
+    }
+
+    if (!parsedDateOfJoining) {
+      setValidationMessage('Please enter a valid Date of Joining (e.g. 2025-10-22).');
+      setShowValidationError(true);
+      setMissingFields(['Date of Joining']);
+      setTouched((prev) => ({ ...prev, 'Date of Joining': true }));
+      scrollToField('Date of Joining');
       setTimeout(() => setShowValidationError(false), 5000);
       return;
     }
     
     // If validation passes, save the form
     try {
-      const employeeData = {
-        firstName,
-        middleName,
-        lastName,
+      let finalHolidayListId = holidayListId;
+      if (!finalHolidayListId && holidayList) {
+        const matchingList = holidayLists.find(
+          (list) => list.name.toLowerCase() === holidayList.trim().toLowerCase()
+        );
+        if (matchingList) {
+          finalHolidayListId = matchingList.id;
+        }
+      }
+
+      let finalApplicableHolidayListId = applicableHolidayListId;
+      if (!finalApplicableHolidayListId && applicableHolidayList) {
+        const matchingList = holidayLists.find(
+          (list) => list.name.toLowerCase() === applicableHolidayList.trim().toLowerCase()
+        );
+        if (matchingList) {
+          finalApplicableHolidayListId = matchingList.id;
+        }
+      }
+      
+      // Prepare employee data, ensuring dates are properly formatted
+      const employeeDataRaw = {
+        series: series?.trim() || undefined,
+        firstName: firstName.trim(),
+        middleName: middleName?.trim() || undefined,
+        lastName: lastName?.trim() || undefined,
         gender,
-        dateOfBirth,
-        salutation,
-        dateOfJoining,
+        dateOfBirth: parsedDateOfBirth,
+        salutation: salutation?.trim() || undefined,
+        dateOfJoining: parsedDateOfJoining,
         status,
-        // Add other form fields as needed
-        designation: '', // You can add designation field if needed
-        mobile,
-        personalEmail,
-        companyEmail,
-        currentAddress,
-        permanentAddress,
-        emergencyContactName,
-        emergencyPhone,
-        relation,
-        maritalStatus,
-        bloodGroup,
-        familyBackground,
-        healthDetails,
-        passportNumber,
-        bioCoverLetter
+        mobile: mobile?.trim() || undefined,
+        personalEmail: personalEmail?.trim() || undefined,
+        companyEmail: companyEmail?.trim() || undefined,
+        currentAddress: currentAddress?.trim() || undefined,
+        permanentAddress: permanentAddress?.trim() || undefined,
+        emergencyContactName: emergencyContactName?.trim() || undefined,
+        emergencyPhone: emergencyPhone?.trim() || undefined,
+        relation: relation?.trim() || undefined,
+        maritalStatus: maritalStatus || undefined,
+        bloodGroup: bloodGroup?.trim() || undefined,
+        familyBackground: familyBackground?.trim() || undefined,
+        healthDetails: healthDetails?.trim() || undefined,
+        passportNumber: passportNumber?.trim() || undefined,
+        bioCoverLetter: bioCoverLetter?.trim() || undefined,
+        // Joining details
+        jobApplicant: jobApplicant?.trim() || undefined,
+        offerDate: parseDate(offerDate),
+        confirmationDate: parseDate(confirmationDate),
+        contractEndDate: parseDate(contractEndDate),
+        noticeDays: noticeDays ? parseInt(noticeDays) : undefined,
+        dateOfRetirement: parseDate(dateOfRetirement),
+        // Attendance & Leaves
+        attendanceDeviceId: attendanceDeviceId?.trim() || undefined,
+        holidayList: finalHolidayListId || undefined,
+        applicableHolidayList: finalApplicableHolidayListId || undefined,
+        defaultShift: defaultShift?.trim() || undefined,
+        expenseApprover: expenseApprover?.trim() || undefined,
+        shiftRequestApprover: shiftRequestApprover?.trim() || undefined,
+        leaveApprover: leaveApprover?.trim() || undefined,
+        // Salary
+        costToCompany: costToCompany ? parseFloat(costToCompany) : undefined,
+        payrollCostCenter: payrollCostCenter?.trim() || undefined,
+        salaryCurrency: salaryCurrency || undefined,
+        salaryMode: salaryMode?.trim() || undefined,
+        // Personal Details
+        healthInsuranceProvider: healthInsuranceProvider?.trim() || undefined,
+        dateOfIssue: parseDate(dateOfIssue),
+        validUpto: parseDate(validUpto),
+        placeOfIssue: placeOfIssue?.trim() || undefined,
+        // Employee Exit
+        resignationLetterDate: parseDate(resignationLetterDate),
+        exitInterviewHeldOn: parseDate(exitInterviewHeldOn),
+        leaveEncashed: leaveEncashed?.trim() || undefined,
+        relievingDate: parseDate(relievingDate),
+        newWorkplace: newWorkplace?.trim() || undefined,
+        reasonForLeaving: reasonForLeaving?.trim() || undefined,
+        exitFeedback: exitFeedback?.trim() || undefined,
       };
       
-      addEmployee(employeeData);
+      // Clean the data to remove undefined values
+      const employeeData = cleanData(employeeDataRaw);
+      
+      console.log('Sending employee data:', employeeData);
+      if (editingEmployeeId) {
+        await updateEmployee(editingEmployeeId, employeeData);
+        setValidationMessage('Employee updated successfully.');
+      } else {
+        await addEmployee(employeeData);
+        setValidationMessage('Employee saved successfully.');
+      }
       setShowSaveAlert(true);
       setTimeout(() => setShowSaveAlert(false), 3000);
       
@@ -95,11 +529,12 @@ export default function Employee() {
         const event = new CustomEvent('setActiveContent', { detail: 'employee-list' });
         window.dispatchEvent(event);
         window.history.pushState({ activeContent: 'employee-list' }, '', '/');
+        resetFormFields();
       }, 2000);
       
     } catch (error) {
       console.error('Error saving employee:', error);
-      setValidationMessage('Error saving employee. Please try again.');
+      setValidationMessage(error.message || 'Error saving employee. Please try again.');
       setShowValidationError(true);
       setTimeout(() => setShowValidationError(false), 5000);
     }
@@ -120,7 +555,7 @@ export default function Employee() {
   const [offerDate, setOfferDate] = useState('');
   const [confirmationDate, setConfirmationDate] = useState('');
   const [contractEndDate, setContractEndDate] = useState('');
-  const [noticedays, setNoticeDays] = useState('');
+  const [noticeDays, setNoticeDays] = useState('');
   const [dateOfRetirement, setDateOfRetirement] = useState('');
   
   // Address & Contacts tab states
@@ -138,7 +573,16 @@ export default function Employee() {
   // Attendance & Leaves tab states
   const [attendanceDeviceId, setAttendanceDeviceId] = useState('');
   const [holidayList, setHolidayList] = useState('');
+  const [holidayListId, setHolidayListId] = useState('');
+  const [showHolidaySuggestions, setShowHolidaySuggestions] = useState(false);
+  const holidayListContainerRef = useRef(null);
   const [applicableHolidayList, setApplicableHolidayList] = useState('');
+  const [applicableHolidayListId, setApplicableHolidayListId] = useState('');
+  const [showApplicableHolidaySuggestions, setShowApplicableHolidaySuggestions] = useState(false);
+  const applicableHolidayListContainerRef = useRef(null);
+  const [holidayLists, setHolidayLists] = useState([]);
+  const [isLoadingHolidayLists, setIsLoadingHolidayLists] = useState(false);
+  const [holidayListError, setHolidayListError] = useState('');
   const [defaultShift, setDefaultShift] = useState('');
   const [expenseApprover, setExpenseApprover] = useState('');
   const [shiftRequestApprover, setShiftRequestApprover] = useState('');
@@ -396,6 +840,90 @@ export default function Employee() {
     window.history.pushState({ activeContent: 'employee-list' }, '', '/');
   };
 
+  const fetchHolidayLists = useCallback(async () => {
+    try {
+      setIsLoadingHolidayLists(true);
+      setHolidayListError('');
+      const response = await holidayListAPI.getAll({ limit: 100 });
+      if (response?.success && Array.isArray(response.data)) {
+        const mapped = response.data.map((list) => ({
+          id: list._id,
+          name: list.holidayListName,
+        }));
+        setHolidayLists(mapped);
+      } else {
+        setHolidayLists([]);
+      }
+    } catch (error) {
+      console.error('Error fetching holiday lists:', error);
+      setHolidayListError(error.message || 'Failed to load holiday lists.');
+    } finally {
+      setIsLoadingHolidayLists(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchHolidayLists();
+  }, [fetchHolidayLists]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (holidayListContainerRef.current && !holidayListContainerRef.current.contains(event.target)) {
+        setShowHolidaySuggestions(false);
+      }
+      if (
+        applicableHolidayListContainerRef.current &&
+        !applicableHolidayListContainerRef.current.contains(event.target)
+      ) {
+        setShowApplicableHolidaySuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const filteredHolidayListsForPrimary = useMemo(() => {
+    if (!holidayList.trim()) {
+      return holidayLists;
+    }
+    return holidayLists.filter((list) =>
+      list.name.toLowerCase().includes(holidayList.trim().toLowerCase())
+    );
+  }, [holidayList, holidayLists]);
+
+  const filteredHolidayListsForApplicable = useMemo(() => {
+    if (!applicableHolidayList.trim()) {
+      return holidayLists;
+    }
+    return holidayLists.filter((list) =>
+      list.name.toLowerCase().includes(applicableHolidayList.trim().toLowerCase())
+    );
+  }, [applicableHolidayList, holidayLists]);
+
+  const handleHolidayListSelect = useCallback((list) => {
+    setHolidayList(list.name);
+    setHolidayListId(list.id);
+    setShowHolidaySuggestions(false);
+  }, []);
+
+  const handleApplicableHolidayListSelect = useCallback((list) => {
+    setApplicableHolidayList(list.name);
+    setApplicableHolidayListId(list.id);
+    setShowApplicableHolidaySuggestions(false);
+  }, []);
+
+  const openHolidayListPage = useCallback(() => {
+    try {
+      window.dispatchEvent(new CustomEvent('setActiveContent', { detail: 'holiday-list' }));
+      window.history.pushState({ activeContent: 'holiday-list' }, '', '/');
+    } catch (error) {
+      console.error('Failed to navigate to holiday list page:', error);
+    }
+  }, []);
+
   return (
     <div className="p-10 bg-gray-50 min-h-full">
       <div className="max-w-6xl mx-auto">
@@ -432,13 +960,27 @@ export default function Employee() {
         {/* Validation Error Alert */}
         {showValidationError && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
-            <div className="flex items-center">
-              <svg className="h-5 w-5 text-red-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+            <div 
+              className="flex items-center flex-1 cursor-pointer hover:bg-red-100 rounded p-2 -m-2 transition-colors"
+              onClick={handleErrorClick}
+              title="Click to jump to the missing field"
+            >
+              <svg className="h-5 w-5 text-red-600 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
-              <span className="text-red-800 font-medium">{validationMessage}</span>
+              <div className="flex-1">
+                <span className="text-red-800 font-medium">{validationMessage}</span>
+                <span className="text-red-600 text-sm ml-2 block sm:inline">(Click to jump to field)</span>
+              </div>
             </div>
-            <button onClick={() => setShowValidationError(false)} className="text-red-600 hover:text-red-800">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowValidationError(false);
+              }} 
+              className="text-red-600 hover:text-red-800 ml-2 flex-shrink-0"
+              title="Close error"
+            >
               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>
@@ -620,10 +1162,12 @@ export default function Employee() {
                     onChange={(e) => setDateOfJoining(e.target.value)}
                     onBlur={() => handleBlur('dateOfJoining')}
                     className={`w-full px-3 py-1 rounded-md bg-gray-100 border ${
-                      hasError('dateOfJoining', dateOfJoining) ? 'border-red-500' : 'border-gray-300'
-                    } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                      hasError('dateOfJoining', dateOfJoining) || missingFields.includes('Date of Joining') 
+                        ? 'border-red-500 ring-2 ring-red-500' 
+                        : 'border-gray-300'
+                    } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
                   />
-                  {hasError('dateOfJoining', dateOfJoining) && (
+                  {(missingFields.includes('Date of Joining') || hasError('dateOfJoining', dateOfJoining)) && (
                     <p className="text-xs text-red-500 mt-1">Date of Joining is required</p>
                   )}
                 </div>
@@ -868,7 +1412,7 @@ export default function Employee() {
                     <input
                       type="number"
                       id="notice-days"
-                      value={noticedays}
+                      value={noticeDays}
                       onChange={(e) => setNoticeDays(e.target.value)}
                       className="w-full px-3 py-1 rounded-md bg-gray-100 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
@@ -1135,7 +1679,7 @@ export default function Employee() {
                   {/* Column 2 */}
                   <div className="space-y-6">
                     {/* Holiday List */}
-                    <div>
+                    <div ref={holidayListContainerRef} className="relative">
                       <label htmlFor="holiday-list" className="block text-sm font-medium text-gray-700 mb-1">
                         Holiday List
                       </label>
@@ -1143,13 +1687,66 @@ export default function Employee() {
                         type="text"
                         id="holiday-list"
                         value={holidayList}
-                        onChange={(e) => setHolidayList(e.target.value)}
+                        onChange={(e) => {
+                          setHolidayList(e.target.value);
+                          setHolidayListId('');
+                          setShowHolidaySuggestions(true);
+                          if (!holidayLists.length && !isLoadingHolidayLists) {
+                            fetchHolidayLists();
+                          }
+                        }}
+                        onFocus={() => {
+                          setShowHolidaySuggestions(true);
+                          if (!holidayLists.length && !isLoadingHolidayLists) {
+                            fetchHolidayLists();
+                          }
+                        }}
+                        placeholder="Select or search holiday list..."
                         className="w-full px-3 py-1 rounded-md bg-gray-100 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
+                      {showHolidaySuggestions && (
+                        <div className="absolute z-20 mt-1 w-full max-h-48 overflow-auto rounded-md border border-gray-200 bg-white shadow-lg">
+                          {isLoadingHolidayLists ? (
+                            <div className="px-3 py-2 text-sm text-gray-500">Loading holiday lists…</div>
+                          ) : filteredHolidayListsForPrimary.length > 0 ? (
+                            filteredHolidayListsForPrimary.map((list) => (
+                              <button
+                                type="button"
+                                key={list.id}
+                                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 focus:bg-gray-100"
+                                onMouseDown={(event) => {
+                                  event.preventDefault();
+                                  handleHolidayListSelect(list);
+                                }}
+                              >
+                                <span className="font-medium text-gray-900">{list.name}</span>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-3 py-2 text-sm text-gray-500 space-y-1">
+                              <p>No holiday lists found.</p>
+                              <button
+                                type="button"
+                                onMouseDown={(event) => {
+                                  event.preventDefault();
+                                  setShowHolidaySuggestions(false);
+                                  openHolidayListPage();
+                                }}
+                                className="text-blue-600 hover:text-blue-800 font-medium"
+                              >
+                                Create a holiday list
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {holidayListError && (
+                        <p className="mt-1 text-xs text-red-600">{holidayListError}</p>
+                      )}
                     </div>
 
                     {/* Applicable Holiday List */}
-                    <div>
+                    <div ref={applicableHolidayListContainerRef} className="relative">
                       <label htmlFor="applicable-holiday-list" className="block text-sm font-medium text-gray-700 mb-1">
                         Applicable Holiday List
                       </label>
@@ -1157,9 +1754,62 @@ export default function Employee() {
                         type="text"
                         id="applicable-holiday-list"
                         value={applicableHolidayList}
-                        onChange={(e) => setApplicableHolidayList(e.target.value)}
+                        onChange={(e) => {
+                          setApplicableHolidayList(e.target.value);
+                          setApplicableHolidayListId('');
+                          setShowApplicableHolidaySuggestions(true);
+                          if (!holidayLists.length && !isLoadingHolidayLists) {
+                            fetchHolidayLists();
+                          }
+                        }}
+                        onFocus={() => {
+                          setShowApplicableHolidaySuggestions(true);
+                          if (!holidayLists.length && !isLoadingHolidayLists) {
+                            fetchHolidayLists();
+                          }
+                        }}
+                        placeholder="Select or search holiday list..."
                         className="w-full px-3 py-1 rounded-md bg-gray-100 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
+                      {showApplicableHolidaySuggestions && (
+                        <div className="absolute z-20 mt-1 w-full max-h-48 overflow-auto rounded-md border border-gray-200 bg-white shadow-lg">
+                          {isLoadingHolidayLists ? (
+                            <div className="px-3 py-2 text-sm text-gray-500">Loading holiday lists…</div>
+                          ) : filteredHolidayListsForApplicable.length > 0 ? (
+                            filteredHolidayListsForApplicable.map((list) => (
+                              <button
+                                type="button"
+                                key={`app-${list.id}`}
+                                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 focus:bg-gray-100"
+                                onMouseDown={(event) => {
+                                  event.preventDefault();
+                                  handleApplicableHolidayListSelect(list);
+                                }}
+                              >
+                                <span className="font-medium text-gray-900">{list.name}</span>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-3 py-2 text-sm text-gray-500 space-y-1">
+                              <p>No holiday lists found.</p>
+                              <button
+                                type="button"
+                                onMouseDown={(event) => {
+                                  event.preventDefault();
+                                  setShowApplicableHolidaySuggestions(false);
+                                  openHolidayListPage();
+                                }}
+                                className="text-blue-600 hover:text-blue-800 font-medium"
+                              >
+                                Create a holiday list
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {holidayListError && (
+                        <p className="mt-1 text-xs text-red-600">{holidayListError}</p>
+                      )}
                     </div>
 
                     {/* Default Shift */}

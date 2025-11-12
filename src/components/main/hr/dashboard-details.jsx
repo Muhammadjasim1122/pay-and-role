@@ -1,167 +1,196 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { MoreHorizontal, Plus, Settings } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-import { useDashboard } from '../../../contexts/DashboardContext';
+import React, { useMemo } from 'react';
+import { MoreHorizontal } from 'lucide-react';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
+import { useEmployee } from '../../../contexts/EmployeeContext';
+import { useLeaveApplication } from '../../../contexts/LeaveApplicationContext';
+
+const COLOR_PALETTE = ['#60a5fa', '#f472b6', '#34d399', '#fbbf24', '#a855f7', '#14b8a6', '#f97316'];
+
+const parseDate = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const countBy = (items, accessor) => {
+  const counts = new Map();
+  items.forEach((item) => {
+    const raw = accessor(item);
+    const label = raw ? String(raw).trim() : 'Not specified';
+    counts.set(label, (counts.get(label) || 0) + 1);
+  });
+  return Array.from(counts.entries()).map(([name, value]) => ({ name, value }));
+};
+
+const ensureData = (data, fallbackLabel = 'No data') =>
+  data.length ? data : [{ name: fallbackLabel, value: 0 }];
+
+const getQuarterRange = (date) => {
+  const year = date.getFullYear();
+  const startMonth = Math.floor(date.getMonth() / 3) * 3;
+  const start = new Date(year, startMonth, 1);
+  const end = new Date(year, startMonth + 3, 1);
+  return { start, end };
+};
+
+const computeAge = (dateValue, referenceDate) => {
+  const date = parseDate(dateValue);
+  if (!date) return null;
+  let age = referenceDate.getFullYear() - date.getFullYear();
+  const monthDiff = referenceDate.getMonth() - date.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && referenceDate.getDate() < date.getDate())) {
+    age -= 1;
+  }
+  return age;
+};
+
+const getAgeBucket = (age) => {
+  if (age === null) return null;
+  if (age < 25) return '< 25';
+  if (age < 35) return '25-34';
+  if (age < 45) return '35-44';
+  if (age < 55) return '45-54';
+  return '55+';
+};
+
+const buildHiringAttritionSeries = (employees, monthsBack = 6) => {
+  const now = new Date();
+  const series = [];
+  for (let i = monthsBack - 1; i >= 0; i -= 1) {
+    const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const monthLabel = monthDate.toLocaleString('default', { month: 'short', year: 'numeric' });
+    const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+    const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 1);
+
+    const hires = employees.filter((emp) => {
+      const doj = parseDate(emp.dateOfJoining);
+      return doj && doj >= monthStart && doj < monthEnd;
+    }).length;
+
+    const exits = employees.filter((emp) => {
+      const relieving = parseDate(emp.relievingDate);
+      return relieving && relieving >= monthStart && relieving < monthEnd;
+    }).length;
+
+    series.push({ month: monthLabel, hiringCount: hires, attritionCount: exits });
+  }
+  return series;
+};
+
+const formatNumber = (value) => value.toLocaleString();
 
 export default function DashboardDetails() {
-  const { dashboards } = useDashboard();
-  const [selectedDashboard, setSelectedDashboard] = useState(null);
+  const { employees } = useEmployee();
+  const { leaveApplications } = useLeaveApplication();
 
-  // Set default dashboard on component mount
-  useEffect(() => {
-    if (dashboards.length > 0 && !selectedDashboard) {
-      setSelectedDashboard(dashboards[0]);
-    }
-  }, [dashboards, selectedDashboard]);
+  const now = new Date();
+  const { start: quarterStart, end: quarterEnd } = getQuarterRange(now);
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+  const startOfNextYear = new Date(now.getFullYear() + 1, 0, 1);
 
-  // Dynamic stats based on selected dashboard
-  const getDynamicStats = () => {
-    if (!selectedDashboard) {
-      return [
-        { title: 'TOTAL EMPLOYEES', value: '0' },
-        { title: 'NEW HIRES (THIS YEAR)', value: '0' },
-        { title: 'EMPLOYEE EXITS (THIS YEAR)', value: '0' },
-        { title: 'EMPLOYEES JOINING (THIS QUARTER)', value: '0' },
-        { title: 'EMPLOYEES RELIEVING (THIS QUARTER)', value: '0' }
-      ];
-    }
+  const stats = useMemo(() => {
+    const totalEmployees = employees.length;
 
-    // Calculate dynamic values based on dashboard data
-    const totalEmployees = selectedDashboard.charts ? selectedDashboard.charts.length * 2 : 0;
-    const newHires = selectedDashboard.cards ? selectedDashboard.cards.length * 3 : 0;
-    const employeeExits = Math.floor(totalEmployees * 0.1); // 10% exit rate
-    const joiningThisQuarter = Math.floor(newHires * 0.8); // 80% of new hires
-    const relievingThisQuarter = Math.floor(employeeExits * 0.6); // 60% of exits
+    const newHiresThisYear = employees.filter((emp) => {
+      const doj = parseDate(emp.dateOfJoining);
+      return doj && doj >= startOfYear && doj < startOfNextYear;
+    }).length;
+
+    const exitsThisYear = employees.filter((emp) => {
+      const relieving = parseDate(emp.relievingDate);
+      return relieving && relieving >= startOfYear && relieving < startOfNextYear;
+    }).length;
+
+    const joiningThisQuarter = employees.filter((emp) => {
+      const doj = parseDate(emp.dateOfJoining);
+      return doj && doj >= quarterStart && doj < quarterEnd;
+    }).length;
+
+    const relievingThisQuarter = employees.filter((emp) => {
+      const relieving = parseDate(emp.relievingDate);
+      return relieving && relieving >= quarterStart && relieving < quarterEnd;
+    }).length;
+
+    const pendingLeaves = leaveApplications.filter(
+      (app) => (app.status || 'Open').toLowerCase() === 'open',
+    ).length;
 
     return [
-      { title: 'TOTAL EMPLOYEES', value: totalEmployees.toString() },
-      { title: 'NEW HIRES (THIS YEAR)', value: newHires.toString() },
-      { title: 'EMPLOYEE EXITS (THIS YEAR)', value: employeeExits.toString() },
-      { title: 'EMPLOYEES JOINING (THIS QUARTER)', value: joiningThisQuarter.toString() },
-      { title: 'EMPLOYEES RELIEVING (THIS QUARTER)', value: relievingThisQuarter.toString() }
+      { title: 'TOTAL EMPLOYEES', value: formatNumber(totalEmployees) },
+      { title: 'NEW HIRES (THIS YEAR)', value: formatNumber(newHiresThisYear) },
+      { title: 'EMPLOYEE EXITS (THIS YEAR)', value: formatNumber(exitsThisYear) },
+      { title: 'JOINING THIS QUARTER', value: formatNumber(joiningThisQuarter) },
+      { title: 'RELIEVING THIS QUARTER', value: formatNumber(relievingThisQuarter) },
+      { title: 'PENDING LEAVE REQUESTS', value: formatNumber(pendingLeaves) },
     ];
-  };
+  }, [employees, leaveApplications, quarterStart, quarterEnd, startOfYear, startOfNextYear]);
 
-  const stats = getDynamicStats();
+  const hiringAttritionData = useMemo(
+    () => buildHiringAttritionSeries(employees, 6),
+    [employees],
+  );
 
-  // Dynamic chart data based on selected dashboard
-  const getDynamicChartData = () => {
-    if (!selectedDashboard) {
-      return {
-        hiringAttritionData: [{ month: 'Oct 2025', hiringCount: 0, attritionCount: 0 }],
-        employeesByAgeData: [
-          { ageGroup: '15-19', count: 0 },
-          { ageGroup: '20-24', count: 0 },
-          { ageGroup: '25-29', count: 0 },
-          { ageGroup: '30-34', count: 0 },
-          { ageGroup: '35-39', count: 0 },
-          { ageGroup: '40-44', count: 0 },
-          { ageGroup: '45-49', count: 0 },
-          { ageGroup: '50-54', count: 0 },
-          { ageGroup: '55-59', count: 0 },
-          { ageGroup: '60-64', count: 0 },
-          { ageGroup: '65-69', count: 0 },
-          { ageGroup: '70-74', count: 0 },
-          { ageGroup: '75-79', count: 0 },
-          { ageGroup: '80+', count: 0 }
-        ],
-        genderDiversityData: [
-          { name: 'Male', value: 0, color: '#60a5fa' },
-          { name: 'Female', value: 0, color: '#f472b6' }
-        ],
-        employeesByTypeData: [
-          { name: 'Full Time', value: 0, color: '#60a5fa' },
-          { name: 'Part Time', value: 0, color: '#f472b6' },
-          { name: 'Contract', value: 0, color: '#34d399' }
-        ],
-        employeesByGradeData: [
-          { name: 'Grade A', value: 0, color: '#60a5fa' }
-        ],
-        employeesByBranchData: [
-          { name: 'Main Branch', value: 0, color: '#60a5fa' }
-        ],
-        designationWiseData: [
-          { name: 'Manager', value: 0, color: '#60a5fa' },
-          { name: 'Developer', value: 0, color: '#f472b6' }
-        ],
-        departmentWiseData: [
-          { name: 'IT', value: 0, color: '#60a5fa' },
-          { name: 'HR', value: 0, color: '#f472b6' }
-        ]
-      };
-    }
+  const departmentData = useMemo(() => {
+    const data = countBy(employees, (emp) => emp.department || 'Not specified')
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
+    return ensureData(data);
+  }, [employees]);
 
-    const totalEmployees = parseInt(stats[0].value);
-    const newHires = parseInt(stats[1].value);
-    const employeeExits = parseInt(stats[2].value);
+  const genderData = useMemo(() => {
+    const data = countBy(employees, (emp) => {
+      const gender = emp.gender;
+      if (!gender) return 'Not specified';
+      return gender.charAt(0).toUpperCase() + gender.slice(1).toLowerCase();
+    });
+    return ensureData(data).map((item, index) => ({
+      ...item,
+      color: COLOR_PALETTE[index % COLOR_PALETTE.length],
+    }));
+  }, [employees]);
 
-    return {
-      hiringAttritionData: [
-        { month: 'Oct 2025', hiringCount: newHires, attritionCount: employeeExits },
-        { month: 'Nov 2025', hiringCount: Math.floor(newHires * 0.8), attritionCount: Math.floor(employeeExits * 0.9) },
-        { month: 'Dec 2025', hiringCount: Math.floor(newHires * 1.2), attritionCount: Math.floor(employeeExits * 1.1) }
-      ],
-      employeesByAgeData: [
-        { ageGroup: '15-19', count: Math.floor(totalEmployees * 0.05) },
-        { ageGroup: '20-24', count: Math.floor(totalEmployees * 0.15) },
-        { ageGroup: '25-29', count: Math.floor(totalEmployees * 0.25) },
-        { ageGroup: '30-34', count: Math.floor(totalEmployees * 0.20) },
-        { ageGroup: '35-39', count: Math.floor(totalEmployees * 0.15) },
-        { ageGroup: '40-44', count: Math.floor(totalEmployees * 0.10) },
-        { ageGroup: '45-49', count: Math.floor(totalEmployees * 0.05) },
-        { ageGroup: '50-54', count: Math.floor(totalEmployees * 0.03) },
-        { ageGroup: '55-59', count: Math.floor(totalEmployees * 0.02) },
-        { ageGroup: '60-64', count: 0 },
-        { ageGroup: '65-69', count: 0 },
-        { ageGroup: '70-74', count: 0 },
-        { ageGroup: '75-79', count: 0 },
-        { ageGroup: '80+', count: 0 }
-      ],
-      genderDiversityData: [
-        { name: 'Male', value: Math.floor(totalEmployees * 0.6), color: '#60a5fa' },
-        { name: 'Female', value: Math.floor(totalEmployees * 0.4), color: '#f472b6' }
-      ],
-      employeesByTypeData: [
-        { name: 'Full Time', value: Math.floor(totalEmployees * 0.8), color: '#60a5fa' },
-        { name: 'Part Time', value: Math.floor(totalEmployees * 0.15), color: '#f472b6' },
-        { name: 'Contract', value: Math.floor(totalEmployees * 0.05), color: '#34d399' }
-      ],
-      employeesByGradeData: [
-        { name: 'Grade A', value: Math.floor(totalEmployees * 0.3), color: '#60a5fa' },
-        { name: 'Grade B', value: Math.floor(totalEmployees * 0.4), color: '#f472b6' },
-        { name: 'Grade C', value: Math.floor(totalEmployees * 0.3), color: '#34d399' }
-      ],
-      employeesByBranchData: [
-        { name: 'Main Branch', value: Math.floor(totalEmployees * 0.6), color: '#60a5fa' },
-        { name: 'Branch 2', value: Math.floor(totalEmployees * 0.4), color: '#f472b6' }
-      ],
-      designationWiseData: [
-        { name: 'Manager', value: Math.floor(totalEmployees * 0.2), color: '#60a5fa' },
-        { name: 'Developer', value: Math.floor(totalEmployees * 0.4), color: '#f472b6' },
-        { name: 'Analyst', value: Math.floor(totalEmployees * 0.4), color: '#34d399' }
-      ],
-      departmentWiseData: [
-        { name: 'IT', value: Math.floor(totalEmployees * 0.5), color: '#60a5fa' },
-        { name: 'HR', value: Math.floor(totalEmployees * 0.3), color: '#f472b6' },
-        { name: 'Finance', value: Math.floor(totalEmployees * 0.2), color: '#34d399' }
-      ]
-    };
-  };
+  const statusData = useMemo(() => {
+    const data = countBy(employees, (emp) => emp.status || 'Not specified');
+    return ensureData(data).map((item, index) => ({
+      ...item,
+      color: COLOR_PALETTE[index % COLOR_PALETTE.length],
+    }));
+  }, [employees]);
 
-  const chartData = getDynamicChartData();
+  const ageData = useMemo(() => {
+    const buckets = { '< 25': 0, '25-34': 0, '35-44': 0, '45-54': 0, '55+': 0 };
+    employees.forEach((emp) => {
+      const age = computeAge(emp.dateOfBirth, now);
+      const bucket = getAgeBucket(age);
+      if (bucket) {
+        buckets[bucket] += 1;
+      }
+    });
+    return Object.entries(buckets).map(([name, count]) => ({ name, count }));
+  }, [employees, now]);
 
   return (
     <div className="p-10 bg-gray-50 min-h-full">
-      <div className="max-w-7xl mx-auto">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 mb-6">
-          {stats.map((stat, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-lg border border-gray-200 p-6"
-            >
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {stats.map((stat) => (
+            <div key={stat.title} className="bg-white rounded-lg border border-gray-200 p-6">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                   {stat.title}
@@ -170,508 +199,158 @@ export default function DashboardDetails() {
                   <MoreHorizontal className="h-4 w-4" />
                 </button>
               </div>
-              <div className="text-3xl font-bold text-gray-900">
-                {stat.value}
-              </div>
+              <div className="text-3xl font-bold text-gray-900">{stat.value}</div>
             </div>
           ))}
         </div>
 
-        {/* Hiring vs Attrition Count Chart */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-sm text-gray-900">Hiring vs Attrition</h2>
+                <p className="text-xs text-gray-500">Based on joining and relieving dates</p>
+              </div>
+              <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={hiringAttritionData} margin={{ top: 16, right: 24, left: 8, bottom: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="month" stroke="#6b7280" fontSize={12} tick={{ fill: '#6b7280' }} />
+                  <YAxis stroke="#6b7280" fontSize={12} tick={{ fill: '#6b7280' }} allowDecimals={false} />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="hiringCount" stroke="#60a5fa" strokeWidth={2} dot={{ r: 3 }} name="Hires" />
+                  <Line type="monotone" dataKey="attritionCount" stroke="#f472b6" strokeWidth={2} dot={{ r: 3 }} name="Attrition" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-sm text-gray-900">Employees by Department</h2>
+                <p className="text-xs text-gray-500">Top departments by headcount</p>
+              </div>
+              <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={departmentData} margin={{ top: 16, right: 24, left: 8, bottom: 24 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis
+                    dataKey="name"
+                    stroke="#6b7280"
+                    fontSize={12}
+                    tick={{ fill: '#6b7280' }}
+                    angle={-30}
+                    textAnchor="end"
+                    interval={0}
+                    height={60}
+                  />
+                  <YAxis stroke="#6b7280" fontSize={12} tick={{ fill: '#6b7280' }} allowDecimals={false} />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#60a5fa" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-sm text-gray-900">Gender Distribution</h2>
+                <p className="text-xs text-gray-500">Across all active employees</p>
+              </div>
+              <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={genderData} cx="50%" cy="50%" innerRadius={45} outerRadius={80} paddingAngle={4} dataKey="value">
+                    {genderData.map((entry) => (
+                      <Cell key={entry.name} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex flex-wrap gap-3 mt-4">
+              {genderData.map((item) => (
+                <div key={item.name} className="flex items-center space-x-2 text-sm">
+                  <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: item.color }} />
+                  <span className="text-gray-600">{item.name}</span>
+                  <span className="font-medium text-gray-900">{formatNumber(item.value)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-sm text-gray-900">Employees by Status</h2>
+                <p className="text-xs text-gray-500">Current employee status mix</p>
+              </div>
+              <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={statusData} cx="50%" cy="50%" innerRadius={45} outerRadius={80} paddingAngle={4} dataKey="value">
+                    {statusData.map((entry) => (
+                      <Cell key={entry.name} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex flex-wrap gap-3 mt-4">
+              {statusData.map((item) => (
+                <div key={item.name} className="flex items-center space-x-2 text-sm">
+                  <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: item.color }} />
+                  <span className="text-gray-600">{item.name}</span>
+                  <span className="font-medium text-gray-900">{formatNumber(item.value)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-sm text-gray-900">Hiring vs Attrition Count</h2>
-              <p className="text-sm text-gray-500">Last synced 11 minutes ago</p>
+              <h2 className="text-sm text-gray-900">Employees by Age Band</h2>
+              <p className="text-xs text-gray-500">Calculated from date of birth</p>
             </div>
-            <div className="flex items-center space-x-2">
-              <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                </svg>
-              </button>
-              <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
-                <MoreHorizontal className="h-4 w-4" />
-              </button>
-            </div>
+            <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
           </div>
-
-                 {/* Chart */}
-                 <div className="h-48">
-                   <ResponsiveContainer width="100%" height="100%">
-                     <LineChart
-                       data={chartData.hiringAttritionData}
-                       margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                     >
-                <CartesianGrid 
-                  strokeDasharray="3 3" 
-                  stroke="#e5e7eb" 
-                  horizontal={true}
-                  vertical={true}
-                />
-                <XAxis 
-                  dataKey="month" 
-                  stroke="#6b7280"
-                  fontSize={12}
-                  tickLine={true}
-                  axisLine={true}
-                  tick={{ fill: '#6b7280' }}
-                />
-                <YAxis 
-                  stroke="#6b7280"
-                  fontSize={12}
-                  tickLine={true}
-                  axisLine={true}
-                  domain={[0, 5]}
-                  tick={{ fill: '#6b7280' }}
-                  tickCount={6}
-                />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '6px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
-                <Legend 
-                  wrapperStyle={{ 
-                    paddingTop: '20px',
-                    fontSize: '12px'
-                  }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="hiringCount" 
-                  stroke="#60a5fa" 
-                  strokeWidth={2}
-                  dot={{ fill: '#60a5fa', strokeWidth: 2, r: 3 }}
-                  name="Hiring Count"
-                  connectNulls={false}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="attritionCount" 
-                  stroke="#1e40af" 
-                  strokeWidth={2}
-                  dot={{ fill: '#1e40af', strokeWidth: 2, r: 3 }}
-                  name="Attrition Count"
-                  connectNulls={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Employees by Age Chart */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4 mt-4">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-sm text-gray-900">Employees by Age</h2>
-              <p className="text-sm text-gray-500">Last synced 40 minutes ago</p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                </svg>
-              </button>
-              <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
-                <MoreHorizontal className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-                 {/* Chart */}
-                 <div className="h-48">
-                   <ResponsiveContainer width="100%" height="100%">
-                     <BarChart
-                       data={chartData.employeesByAgeData}
-                       margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                     >
-                <CartesianGrid 
-                  strokeDasharray="3 3" 
-                  stroke="#e5e7eb" 
-                  horizontal={true}
-                  vertical={false}
-                />
-                <XAxis 
-                  dataKey="ageGroup" 
-                  stroke="#6b7280"
-                  fontSize={12}
-                  tickLine={true}
-                  axisLine={true}
-                  tick={{ fill: '#6b7280' }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={60}
-                />
-                <YAxis 
-                  stroke="#6b7280"
-                  fontSize={12}
-                  tickLine={true}
-                  axisLine={true}
-                  domain={[0, 1]}
-                  tick={{ fill: '#6b7280' }}
-                  tickCount={3}
-                />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '6px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
-                <Bar 
-                  dataKey="count" 
-                  fill="#60a5fa"
-                  radius={[2, 2, 0, 0]}
-                />
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={ageData} margin={{ top: 16, right: 24, left: 8, bottom: 16 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="name" stroke="#6b7280" fontSize={12} tick={{ fill: '#6b7280' }} />
+                <YAxis stroke="#6b7280" fontSize={12} tick={{ fill: '#6b7280' }} allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="count" fill="#34d399" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Gender Diversity Ratio and Employees by Type Charts */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          {/* Gender Diversity Ratio Chart */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-sm text-gray-900">Gender Diversity Ratio</h2>
-                <p className="text-sm text-gray-500">Last synced 43 minutes ago</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                  </svg>
-                </button>
-                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
-                  <MoreHorizontal className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Chart */}
-            <div className="h-64 flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                           data={chartData.genderDiversityData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={70}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                           {chartData.genderDiversityData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Legend */}
-            <div className="mt-4 space-y-2">
-                     {chartData.genderDiversityData.map((item, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <div 
-                    className="w-3 h-3 rounded-sm" 
-                    style={{ backgroundColor: item.color }}
-                  ></div>
-                  <span className="text-sm text-gray-700">{item.name}</span>
-                  <span className="text-sm text-gray-900 font-medium">{item.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Employees by Type Chart */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-sm text-gray-900">Employees by Type</h2>
-                <p className="text-sm text-gray-500">Last synced 43 minutes ago</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                  </svg>
-                </button>
-                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
-                  <MoreHorizontal className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Chart */}
-            <div className="h-64 flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={chartData.employeesByTypeData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={70}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {chartData.employeesByTypeData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Legend */}
-            <div className="mt-4 space-y-2">
-              {chartData.employeesByTypeData.map((item, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <div 
-                    className="w-3 h-3 rounded-sm" 
-                    style={{ backgroundColor: item.color }}
-                  ></div>
-                  <span className="text-sm text-gray-700">{item.name}</span>
-                  <span className="text-sm text-gray-900 font-medium">{item.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Additional 4 Charts - 2x2 Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          {/* Employees by Grade Chart */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-sm text-gray-900">Employees by Grade</h2>
-                <p className="text-sm text-gray-500">Last synced 46 minutes ago</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                  </svg>
-                </button>
-                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
-                  <MoreHorizontal className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Chart */}
-            <div className="h-64 flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={chartData.employeesByGradeData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={70}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {chartData.employeesByGradeData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Legend */}
-            <div className="mt-4 space-y-2">
-              {chartData.employeesByGradeData.map((item, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <div 
-                    className="w-3 h-3 rounded-sm" 
-                    style={{ backgroundColor: item.color }}
-                  ></div>
-                  <span className="text-sm text-gray-700">{item.name}</span>
-                  <span className="text-sm text-gray-900 font-medium">{item.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Employees by Branch Chart */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-sm text-gray-900">Employees by Branch</h2>
-                <p className="text-sm text-gray-500">Last synced 46 minutes ago</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                  </svg>
-                </button>
-                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
-                  <MoreHorizontal className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Chart */}
-            <div className="h-64 flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={chartData.employeesByBranchData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={70}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {chartData.employeesByBranchData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Legend */}
-            <div className="mt-4 space-y-2">
-              {chartData.employeesByBranchData.map((item, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <div 
-                    className="w-3 h-3 rounded-sm" 
-                    style={{ backgroundColor: item.color }}
-                  ></div>
-                  <span className="text-sm text-gray-700">{item.name}</span>
-                  <span className="text-sm text-gray-900 font-medium">{item.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Designation Wise Employee Count Chart */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-sm text-gray-900">Designation Wise Employee Count</h2>
-                <p className="text-sm text-gray-500">Last synced 46 minutes ago</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                  </svg>
-                </button>
-                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
-                  <MoreHorizontal className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Chart */}
-            <div className="h-64 flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={chartData.designationWiseData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={70}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {chartData.designationWiseData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Legend */}
-            <div className="mt-4 space-y-2">
-              {chartData.designationWiseData.map((item, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <div 
-                    className="w-3 h-3 rounded-sm" 
-                    style={{ backgroundColor: item.color }}
-                  ></div>
-                  <span className="text-sm text-gray-700">{item.name}</span>
-                  <span className="text-sm text-gray-900 font-medium">{item.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Department Wise Employee Count Chart */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-sm text-gray-900">Department Wise Employee Count</h2>
-                <p className="text-sm text-gray-500">Last synced 46 minutes ago</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                  </svg>
-                </button>
-                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors">
-                  <MoreHorizontal className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Chart */}
-            <div className="h-64 flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={chartData.departmentWiseData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={70}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {chartData.departmentWiseData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Legend */}
-            <div className="mt-4 space-y-2">
-              {chartData.departmentWiseData.map((item, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <div 
-                    className="w-3 h-3 rounded-sm" 
-                    style={{ backgroundColor: item.color }}
-                  ></div>
-                  <span className="text-sm text-gray-700">{item.name}</span>
-                  <span className="text-sm text-gray-900 font-medium">{item.value}</span>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </div>

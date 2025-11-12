@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Save, X, CheckCircle } from 'lucide-react';
+import { Save, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { useRecruitment } from '../../../contexts/RecruitmentContext';
 
 export default function JobOpeningForm({ isSidebarOpen = true, editId = null }) {
   const { addJobOpening, getJobOpeningById, updateJobOpening } = useRecruitment();
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
   const [formData, setFormData] = useState({
     title: '',
     department: '',
@@ -46,29 +47,50 @@ export default function JobOpeningForm({ isSidebarOpen = true, editId = null }) 
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.title || !formData.department) {
-      alert('Please fill in required fields!');
+      setToastType('error');
+      setToastMessage('Please fill in all required fields (Title, Department, Location, Employment Type).');
+      setShowToast(true);
+      return;
+    }
+    if (!formData.location || !formData.employmentType) {
+      setToastType('error');
+      setToastMessage('Location and employment type are required.');
+      setShowToast(true);
       return;
     }
     
-    // Save or update to context
-    if (editId) {
-      updateJobOpening(editId, formData);
-      setToastMessage('Job opening updated successfully!');
-    } else {
-      addJobOpening(formData);
-      setToastMessage('Job opening saved successfully!');
+    try {
+      const payload = { ...formData };
+      Object.keys(payload).forEach((key) => {
+        if (payload[key] === '') {
+          delete payload[key];
+        }
+      });
+
+      if (editId) {
+        await updateJobOpening(editId, payload);
+        setToastType('success');
+        setToastMessage('Job opening updated successfully!');
+      } else {
+        await addJobOpening(payload);
+        setToastType('success');
+        setToastMessage('Job opening saved successfully!');
+      }
+      setShowToast(true);
+  
+      setTimeout(() => {
+        const event = new CustomEvent('setActiveContent', { detail: 'job-opening' });
+        window.dispatchEvent(event);
+        window.history.pushState({ activeContent: 'job-opening' }, '', '/');
+      }, 500);
+    } catch (error) {
+      console.error('Failed to save job opening:', error);
+      setToastType('error');
+      setToastMessage(error.message || 'Failed to save job opening. Please try again.');
+      setShowToast(true);
     }
-    
-    setShowToast(true);
-    
-    // Navigate back to job opening list after showing toast
-    setTimeout(() => {
-      const event = new CustomEvent('setActiveContent', { detail: 'job-opening' });
-      window.dispatchEvent(event);
-      window.history.pushState({ activeContent: 'job-opening' }, '', '/');
-    }, 500);
   };
 
   const handleCancel = () => {
@@ -82,9 +104,21 @@ export default function JobOpeningForm({ isSidebarOpen = true, editId = null }) 
     <>
       {showToast && (
         <div className="fixed top-4 right-4 z-50 animate-in fade-in-0 slide-in-from-top-2">
-          <div className="bg-white rounded-lg shadow-lg border border-green-200 px-4 py-3 pr-8 flex items-center gap-3 min-w-[300px]">
-            <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-            <span className="text-sm font-medium text-green-800">
+          <div
+            className={`bg-white rounded-lg shadow-lg border px-4 py-3 pr-8 flex items-center gap-3 min-w-[300px] ${
+              toastType === 'error' ? 'border-red-200' : 'border-green-200'
+            }`}
+          >
+            {toastType === 'error' ? (
+              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
+            ) : (
+              <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+            )}
+            <span
+              className={`text-sm font-medium ${
+                toastType === 'error' ? 'text-red-800' : 'text-green-800'
+              }`}
+            >
               {toastMessage}
             </span>
             <button

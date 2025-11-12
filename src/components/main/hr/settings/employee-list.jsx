@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
-import { MoreHorizontal, Heart, MessageCircle, Grid3x3 } from 'lucide-react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { MoreHorizontal, Heart, MessageCircle, Grid3x3, Pencil, Trash2 } from 'lucide-react';
 import { useEmployee } from '../../../../contexts/EmployeeContext';
 
 export default function EmployeeList() {
-  const { employees } = useEmployee();
+  const { employees, deleteEmployee } = useEmployee();
   const [selectedView, setSelectedView] = useState('List View');
   const [searchId, setSearchId] = useState('');
   const [searchName, setSearchName] = useState('');
@@ -15,6 +15,16 @@ export default function EmployeeList() {
   const [sortOrder, setSortOrder] = useState('desc');
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [currentPage, setCurrentPage] = useState(1);
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState(null);
+  const [feedback, setFeedback] = useState({ type: '', message: '' });
+
+  useEffect(() => {
+    if (!feedback.message) return;
+    const timer = setTimeout(() => setFeedback({ type: '', message: '' }), 4000);
+    return () => clearTimeout(timer);
+  }, [feedback]);
 
   // Filter employees based on search criteria
   const filteredEmployees = employees.filter(employee => {
@@ -74,11 +84,56 @@ export default function EmployeeList() {
   }, [searchId, searchName, searchDepartment]);
 
   const handleAddEmployee = () => {
-    // Navigate to employee form
     const event = new CustomEvent('setActiveContent', { detail: 'employee' });
+    window.dispatchEvent(new CustomEvent('createEmployee'));
     window.dispatchEvent(event);
     window.history.pushState({ activeContent: 'employee' }, '', '/');
   };
+
+  const closeMenus = useCallback(() => setOpenMenuId(null), []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest?.('[data-employee-row-menu]')) {
+        closeMenus();
+      }
+    };
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, [closeMenus]);
+
+  const handleEditEmployee = useCallback((employee) => {
+    closeMenus();
+    window.dispatchEvent(new CustomEvent('editEmployee', { detail: employee }));
+    const event = new CustomEvent('setActiveContent', { detail: 'employee' });
+    window.dispatchEvent(event);
+    window.history.pushState({ activeContent: 'employee' }, '', '/');
+  }, [closeMenus]);
+
+  const handleDeleteRequest = useCallback((employee) => {
+    closeMenus();
+    setEmployeeToDelete(employee);
+  }, [closeMenus]);
+
+  const cancelDelete = useCallback(() => {
+    if (isDeleting) return;
+    setEmployeeToDelete(null);
+  }, [isDeleting]);
+
+  const confirmDelete = useCallback(async () => {
+    if (!employeeToDelete || isDeleting) return;
+    try {
+      setIsDeleting(true);
+      await deleteEmployee(employeeToDelete.id);
+      setFeedback({ type: 'success', message: 'Employee deleted successfully.' });
+      setEmployeeToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete employee:', error);
+      setFeedback({ type: 'error', message: error.message || 'Failed to delete employee.' });
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [deleteEmployee, employeeToDelete, isDeleting]);
 
   const handleRefresh = () => {
     // Reset search fields
@@ -116,6 +171,17 @@ export default function EmployeeList() {
   return (
     <div className="p-6 bg-gray-50 min-h-full">
       <div className="max-w-full mx-auto">
+        {feedback.message && (
+          <div
+            className={`mb-4 rounded-md border px-4 py-2 text-sm font-medium ${
+              feedback.type === 'error'
+                ? 'border-red-200 bg-red-50 text-red-700'
+                : 'border-green-200 bg-green-50 text-green-700'
+            }`}
+          >
+            {feedback.message}
+          </div>
+        )}
         {/* Top Bar */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
@@ -309,7 +375,7 @@ export default function EmployeeList() {
                 <div className="col-span-2 flex items-center">
                   <span className="text-sm text-gray-600">{employee.designation}</span>
                 </div>
-                <div className="col-span-4 flex items-center justify-end space-x-6">
+                <div className="col-span-4 flex items-center justify-end space-x-6" data-employee-row-menu>
                   <span className="text-sm text-gray-600">{employee.employeeId}</span>
                   <span className="text-sm text-gray-500">{employee.lastUpdated}</span>
                   <button className="flex items-center space-x-1 text-gray-400 hover:text-gray-600">
@@ -320,6 +386,44 @@ export default function EmployeeList() {
                   <button className="text-gray-400 hover:text-red-500">
                     <Heart className="h-4 w-4" />
                   </button>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setOpenMenuId((prev) => (prev === employee.id ? null : employee.id));
+                      }}
+                      className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus:outline-none"
+                    >
+                      <MoreHorizontal className="h-5 w-5" />
+                    </button>
+                    {openMenuId === employee.id && (
+                      <div className="absolute right-0 mt-2 w-36 rounded-lg border border-gray-200 bg-white shadow-lg z-10">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleEditEmployee(employee);
+                          }}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          <Pencil className="h-4 w-4" />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleDeleteRequest(employee);
+                          }}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -387,6 +491,42 @@ export default function EmployeeList() {
           </div>
         </div>
       </div>
+      {employeeToDelete && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60">
+          <div className="relative w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900">Delete Employee</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Are you sure you want to delete
+              <span className="font-semibold"> {employeeToDelete.fullName || employeeToDelete.firstName}</span>?
+              This action cannot be undone.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={cancelDelete}
+                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                className="inline-flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-400"
+                disabled={isDeleting}
+              >
+                {isDeleting && (
+                  <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                )}
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

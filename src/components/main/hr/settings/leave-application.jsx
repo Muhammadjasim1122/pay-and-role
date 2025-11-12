@@ -2,21 +2,28 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useLeaveApplication } from '../../../../contexts/LeaveApplicationContext';
+import { employeeAPI, leaveTypeAPI } from '../../../../lib/api';
 import { Save, X } from 'lucide-react';
 
 export default function LeaveApplication({ isSidebarOpen = true }) {
   const { addLeaveApplication } = useLeaveApplication();
+  const [employees, setEmployees] = useState([]);
+  const [leaveTypes, setLeaveTypes] = useState([]);
+  const [filteredEmployees, setFilteredEmployees] = useState([]);
+  const [filteredLeaveTypes, setFilteredLeaveTypes] = useState([]);
   const colorPickerRef = useRef(null);
   const [series, setSeries] = useState('HR-LAP-.YYYY.-');
   const [employee, setEmployee] = useState('');
-  const [company, setCompany] = useState('sdfsdf');
+  const [employeeId, setEmployeeId] = useState(''); // Store the actual employee ObjectId
+  const [company, setCompany] = useState('Default Company');
   const [leaveType, setLeaveType] = useState('');
+  const [leaveTypeId, setLeaveTypeId] = useState(''); // Store the actual leave type ObjectId
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [halfDay, setHalfDay] = useState(false);
   const [reason, setReason] = useState('');
   const [leaveApprover, setLeaveApprover] = useState('');
-  const [postingDate, setPostingDate] = useState('22-10-2025');
+  const [postingDate, setPostingDate] = useState('');
   const [status, setStatus] = useState('Open');
   const [followViaEmail, setFollowViaEmail] = useState(true);
   const [otherDetailsExpanded, setOtherDetailsExpanded] = useState(true);
@@ -37,6 +44,68 @@ export default function LeaveApplication({ isSidebarOpen = true }) {
     '#14B8A6', '#84CC16'
   ];
 
+  // Fetch employees and leave types on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch employees
+        const employeesResponse = await employeeAPI.getAll({ limit: 100 });
+        if (employeesResponse.success) {
+          const employeeList = employeesResponse.data.map(emp => ({
+            id: emp._id,
+            name: `${emp.firstName} ${emp.middleName ? emp.middleName + ' ' : ''}${emp.lastName || ''}`.trim(),
+            employeeId: emp.employeeId || `HR-EMP-${emp._id}`,
+            fullData: emp
+          }));
+          setEmployees(employeeList);
+          setFilteredEmployees(employeeList);
+        }
+
+        // Fetch leave types
+        const leaveTypesResponse = await leaveTypeAPI.getAll({ limit: 100 });
+        if (leaveTypesResponse.success) {
+          const leaveTypeList = leaveTypesResponse.data.map(lt => ({
+            id: lt._id,
+            name: lt.leaveTypeName,
+            fullData: lt
+          }));
+          setLeaveTypes(leaveTypeList);
+          setFilteredLeaveTypes(leaveTypeList);
+        }
+      } catch (error) {
+        console.error('Error fetching employees/leave types:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Filter employees based on input
+  useEffect(() => {
+    if (employee.trim()) {
+      const filtered = employees.filter(emp => 
+        emp.name.toLowerCase().includes(employee.toLowerCase()) ||
+        emp.employeeId.toLowerCase().includes(employee.toLowerCase())
+      );
+      setFilteredEmployees(filtered);
+    } else {
+      // Show all employees when field is empty
+      setFilteredEmployees(employees);
+    }
+  }, [employee, employees]);
+
+  // Filter leave types based on input
+  useEffect(() => {
+    if (leaveType.trim()) {
+      const filtered = leaveTypes.filter(lt => 
+        lt.name.toLowerCase().includes(leaveType.toLowerCase())
+      );
+      setFilteredLeaveTypes(filtered);
+    } else {
+      setFilteredLeaveTypes(leaveTypes);
+    }
+  }, [leaveType, leaveTypes]);
+
   // Close color picker when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -54,7 +123,7 @@ export default function LeaveApplication({ isSidebarOpen = true }) {
     };
   }, [showColorPicker]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Validate required fields
     if (!employee.trim()) {
       setAlertMessage('Employee is required!');
@@ -96,34 +165,128 @@ export default function LeaveApplication({ isSidebarOpen = true }) {
       return;
     }
 
-    // Create application data
+    // Helper function to safely parse dates
+    const parseDate = (dateValue) => {
+      if (!dateValue || dateValue.trim() === '') return null;
+      
+      // If it's already a valid Date object
+      if (dateValue instanceof Date && !isNaN(dateValue.getTime())) {
+        return dateValue.toISOString();
+      }
+      
+      // Try parsing as Date (handles ISO format, YYYY-MM-DD, etc.)
+      const date = new Date(dateValue);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString();
+      }
+      
+      // If it's in DD-MM-YYYY format, convert it
+      if (typeof dateValue === 'string' && dateValue.includes('-')) {
+        const parts = dateValue.split('-');
+        if (parts.length === 3) {
+          // Try DD-MM-YYYY format
+          const day = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10);
+          const year = parseInt(parts[2], 10);
+          
+          if (!isNaN(day) && !isNaN(month) && !isNaN(year) && day > 0 && day <= 31 && month > 0 && month <= 12) {
+            const parsedDate = new Date(year, month - 1, day);
+            if (!isNaN(parsedDate.getTime())) {
+              return parsedDate.toISOString();
+            }
+          }
+        }
+      }
+      
+      console.warn(`Invalid date value: ${dateValue}`);
+      return null;
+    };
+
+    // Validate employee exists and get ObjectId
+    let finalEmployeeId = employeeId; // Use stored ID if available
+    
+    if (!finalEmployeeId || finalEmployeeId.trim() === '') {
+      // If no stored ID, try to find employee by name or employeeId
+      const employeeInput = employee.trim();
+      const foundEmployee = employees.find(emp => 
+        emp.name.toLowerCase() === employeeInput.toLowerCase() ||
+        emp.employeeId.toLowerCase() === employeeInput.toLowerCase() ||
+        emp.id === employeeInput
+      );
+      
+      if (!foundEmployee) {
+        if (employees.length === 0) {
+          setAlertMessage('No employees found. Please create an employee first.');
+        } else {
+          setAlertMessage(`Employee "${employeeInput}" not found. Please select from the dropdown list or create a new employee.`);
+        }
+        setAlertType('error');
+        setShowAlert(true);
+        setShowEmployeeSuggestions(true);
+        setTimeout(() => setShowAlert(false), 5000);
+        return;
+      }
+      finalEmployeeId = foundEmployee.id;
+    }
+
+    // Validate leave type exists and get ObjectId
+    let finalLeaveTypeId = leaveTypeId; // Use stored ID if available
+    
+    if (!finalLeaveTypeId || finalLeaveTypeId.trim() === '') {
+      // If no stored ID, try to find leave type by name
+      const leaveTypeInput = leaveType.trim();
+      const foundLeaveType = leaveTypes.find(lt => 
+        lt.name.toLowerCase() === leaveTypeInput.toLowerCase() ||
+        lt.id === leaveTypeInput
+      );
+      
+      if (!foundLeaveType) {
+        setAlertMessage(`Leave Type "${leaveTypeInput}" not found. Please select from the dropdown list.`);
+        setAlertType('error');
+        setShowAlert(true);
+        setShowLeaveTypeSuggestions(true);
+        setTimeout(() => setShowAlert(false), 5000);
+        return;
+      }
+      finalLeaveTypeId = foundLeaveType.id;
+    }
+
+    // Create application data with proper formatting
     const applicationData = {
-      employee: employee.trim(),
-      employeeName: employee.trim(),
-      leaveType: leaveType.trim(),
-      company: company.trim(),
-      fromDate,
-      toDate,
-      halfDay,
-      reason: reason.trim(),
+      employee: finalEmployeeId, // Employee ObjectId
+      company: company.trim() || 'Default Company',
+      leaveType: finalLeaveTypeId, // LeaveType ObjectId
+      fromDate: parseDate(fromDate),
+      toDate: parseDate(toDate),
+      halfDay: halfDay || false,
+      reason: reason?.trim() || undefined,
       leaveApprover: leaveApprover.trim(),
-      postingDate,
-      status,
-      followViaEmail,
-      salarySlip: salarySlip.trim(),
-      letterHead: letterHead.trim(),
+      postingDate: postingDate ? parseDate(postingDate) : new Date().toISOString(),
+      status: status || 'Open',
+      followViaEmail: followViaEmail !== undefined ? followViaEmail : true,
+      salarySlip: salarySlip?.trim() || undefined,
+      letterHead: letterHead?.trim() || undefined,
       color: color || '#3B82F6'
     };
 
+    // Clean undefined values
+    const cleanedData = Object.fromEntries(
+      Object.entries(applicationData).filter(([_, v]) => v !== undefined && v !== '')
+    );
+
+    console.log('Sending leave application data:', cleanedData);
+
     try {
-      addLeaveApplication(applicationData);
+      await addLeaveApplication(cleanedData);
       setAlertMessage('Leave Application saved successfully!');
       setAlertType('success');
       setShowAlert(true);
       
       // Reset form
       setEmployee('');
+      setEmployeeId('');
       setLeaveType('');
+      setLeaveTypeId('');
       setFromDate('');
       setToDate('');
       setHalfDay(false);
@@ -137,10 +300,11 @@ export default function LeaveApplication({ isSidebarOpen = true }) {
       
       setTimeout(() => setShowAlert(false), 3000);
     } catch (error) {
-      setAlertMessage('Error saving leave application!');
+      console.error('Error saving leave application:', error);
+      setAlertMessage(error.message || 'Error saving leave application!');
       setAlertType('error');
       setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 3000);
+      setTimeout(() => setShowAlert(false), 5000);
     }
   };
 
@@ -218,36 +382,85 @@ export default function LeaveApplication({ isSidebarOpen = true }) {
                     type="text"
                     id="employee"
                     value={employee}
-                    onChange={(e) => setEmployee(e.target.value)}
-                    onFocus={() => setShowEmployeeSuggestions(true)}
+                    onChange={(e) => {
+                      setEmployee(e.target.value);
+                      setEmployeeId(''); // Clear ID when user types manually
+                      setShowEmployeeSuggestions(true);
+                    }}
+                    onFocus={() => {
+                      setShowEmployeeSuggestions(true);
+                      // Show all employees when field is focused
+                      if (!employee.trim()) {
+                        setFilteredEmployees(employees);
+                      }
+                    }}
                     onBlur={() => setTimeout(() => setShowEmployeeSuggestions(false), 200)}
+                    placeholder="Click to see employees or type to search..."
                     className="w-full px-3 py-0 rounded-md bg-gray-100 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
                   
                   {/* Suggestions Dropdown */}
                   {showEmployeeSuggestions && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-md border border-gray-300 shadow-lg z-10">
-                      <button
-                        type="button"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          window.location.href = '/hr/employee';
-                        }}
-                        className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center border-b border-gray-200"
-                      >
-                        <span className="text-gray-500 mr-2">+</span>
-                        <span>Create a new <span className="text-blue-600">Employee</span></span>
-                      </button>
-                      <button
-                        type="button"
-                        className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center"
-                      >
-                        <svg className="h-4 w-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        <span>Advanced Search</span>
-                      </button>
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-md border border-gray-300 shadow-lg z-10 max-h-60 overflow-y-auto">
+                      {employees.length === 0 ? (
+                        <div className="px-3 py-4 text-sm text-gray-600">
+                          <div className="mb-2">No employees found in the system.</div>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              window.location.href = '/hr/employee';
+                            }}
+                            className="text-blue-600 hover:text-blue-800 underline font-medium"
+                          >
+                            Create your first employee →
+                          </button>
+                        </div>
+                      ) : filteredEmployees.length > 0 ? (
+                        <>
+                          {filteredEmployees.slice(0, 10).map((emp) => (
+                            <button
+                              key={emp.id}
+                              type="button"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                setEmployee(emp.name);
+                                setEmployeeId(emp.id); // Store the ObjectId
+                                setShowEmployeeSuggestions(false);
+                              }}
+                              className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-between border-b border-gray-100"
+                            >
+                              <div>
+                                <div className="font-medium">{emp.name}</div>
+                                <div className="text-xs text-gray-500">{emp.employeeId}</div>
+                              </div>
+                            </button>
+                          ))}
+                          {employee.trim() && filteredEmployees.length === 0 && (
+                            <div className="px-3 py-2 text-sm text-gray-500 border-b border-gray-200">
+                              No employees match "{employee}"
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="px-3 py-2 text-sm text-gray-500">
+                          {employee.trim() ? `No employees match "${employee}"` : 'Type to search employees...'}
+                        </div>
+                      )}
+                      {employees.length > 0 && (
+                        <button
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            window.location.href = '/hr/employee';
+                          }}
+                          className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center border-t border-gray-200"
+                        >
+                          <span className="text-gray-500 mr-2">+</span>
+                          <span>Create a new <span className="text-blue-600">Employee</span></span>
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -264,35 +477,50 @@ export default function LeaveApplication({ isSidebarOpen = true }) {
                     type="text"
                     id="leave-type"
                     value={leaveType}
-                    onChange={(e) => setLeaveType(e.target.value)}
+                    onChange={(e) => {
+                      setLeaveType(e.target.value);
+                      setLeaveTypeId(''); // Clear ID when user types manually
+                      setShowLeaveTypeSuggestions(true);
+                    }}
                     onFocus={() => setShowLeaveTypeSuggestions(true)}
                     onBlur={() => setTimeout(() => setShowLeaveTypeSuggestions(false), 200)}
+                    placeholder="Type to search leave types..."
                     className="w-full px-3 py-0 rounded-md bg-gray-100 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
                   
                   {/* Suggestions Dropdown */}
                   {showLeaveTypeSuggestions && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-md border border-gray-300 shadow-lg z-10">
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-md border border-gray-300 shadow-lg z-10 max-h-60 overflow-y-auto">
+                      {filteredLeaveTypes.length > 0 ? (
+                        filteredLeaveTypes.slice(0, 10).map((lt) => (
+                          <button
+                            key={lt.id}
+                            type="button"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setLeaveType(lt.name);
+                              setLeaveTypeId(lt.id); // Store the ObjectId
+                              setShowLeaveTypeSuggestions(false);
+                            }}
+                            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center border-b border-gray-100"
+                          >
+                            <div className="font-medium">{lt.name}</div>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-3 py-2 text-sm text-gray-500">No leave types found</div>
+                      )}
                       <button
                         type="button"
                         onMouseDown={(e) => {
                           e.preventDefault();
                           window.location.href = '/hr/leave-type';
                         }}
-                        className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center border-b border-gray-200"
+                        className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center border-t border-gray-200"
                       >
                         <span className="text-gray-500 mr-2">+</span>
                         <span>Create a new <span className="text-blue-600">Leave Type</span></span>
-                      </button>
-                      <button
-                        type="button"
-                        className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center"
-                      >
-                        <svg className="h-4 w-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        <span>Advanced Search</span>
                       </button>
                     </div>
                   )}

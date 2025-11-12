@@ -18,12 +18,50 @@ export default function LeaveApplicationList() {
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [currentPage, setCurrentPage] = useState(1);
 
+  const normalizedApplications = leaveApplications.map((application) => {
+    const employeeValue = application.employee;
+    const leaveTypeValue = application.leaveType;
+
+    const employeeName =
+      typeof employeeValue === 'string'
+        ? employeeValue
+        : employeeValue
+        ? [
+            employeeValue.firstName,
+            employeeValue.middleName,
+            employeeValue.lastName,
+          ]
+            .filter(Boolean)
+            .join(' ') ||
+          employeeValue.employeeId ||
+          employeeValue._id ||
+          ''
+        : '';
+
+    const employeeIdLabel =
+      typeof employeeValue === 'string'
+        ? employeeValue
+        : employeeValue?.employeeId || employeeValue?._id || '';
+
+    const leaveTypeName =
+      typeof leaveTypeValue === 'string'
+        ? leaveTypeValue
+        : leaveTypeValue?.leaveTypeName || '';
+
+    return {
+      ...application,
+      employeeName,
+      employeeIdLabel,
+      leaveTypeName,
+    };
+  });
+
   // Filter leave applications based on search criteria
-  const filteredApplications = leaveApplications.filter(application => {
+  const filteredApplications = normalizedApplications.filter(application => {
     const matchesId = !searchId || application.applicationId?.toLowerCase().includes(searchId.toLowerCase());
-    const matchesEmployee = !searchEmployee || application.employee?.toLowerCase().includes(searchEmployee.toLowerCase());
+    const matchesEmployee = !searchEmployee || application.employeeIdLabel?.toLowerCase().includes(searchEmployee.toLowerCase());
     const matchesEmployeeName = !searchEmployeeName || application.employeeName?.toLowerCase().includes(searchEmployeeName.toLowerCase());
-    const matchesLeaveType = !searchLeaveType || application.leaveType?.toLowerCase().includes(searchLeaveType.toLowerCase());
+    const matchesLeaveType = !searchLeaveType || application.leaveTypeName?.toLowerCase().includes(searchLeaveType.toLowerCase());
     const matchesStatus = !searchStatus || application.status?.toLowerCase().includes(searchStatus.toLowerCase());
     
     return matchesId && matchesEmployee && matchesEmployeeName && matchesLeaveType && matchesStatus;
@@ -35,12 +73,12 @@ export default function LeaveApplicationList() {
     
     switch(sortBy) {
       case 'employee':
-        aValue = a.employee?.toLowerCase() || '';
-        bValue = b.employee?.toLowerCase() || '';
+        aValue = a.employeeName?.toLowerCase() || '';
+        bValue = b.employeeName?.toLowerCase() || '';
         break;
       case 'leaveType':
-        aValue = a.leaveType?.toLowerCase() || '';
-        bValue = b.leaveType?.toLowerCase() || '';
+        aValue = a.leaveTypeName?.toLowerCase() || '';
+        bValue = b.leaveTypeName?.toLowerCase() || '';
         break;
       case 'status':
         aValue = a.status?.toLowerCase() || '';
@@ -315,17 +353,17 @@ export default function LeaveApplicationList() {
           <div className="divide-y divide-gray-200">
             {paginatedApplications.map((application) => (
               <div 
-                key={application.id}
+                key={application.id || application._id}
                 className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50 transition-colors"
               >
                 <div className="col-span-1 flex items-center">
                   <input type="checkbox" className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
                 </div>
                 <div className="col-span-3 flex items-center">
-                  <span className="text-sm font-medium text-gray-900">{application.employee}</span>
+                  <span className="text-sm font-medium text-gray-900">{application.employeeName || application.employeeIdLabel}</span>
                 </div>
                 <div className="col-span-2 flex items-center">
-                  <span className="text-sm text-gray-600">{application.leaveType}</span>
+                  <span className="text-sm text-gray-600">{application.leaveTypeName}</span>
                 </div>
                 <div className="col-span-2 flex items-center">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

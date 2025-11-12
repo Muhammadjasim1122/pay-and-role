@@ -45,7 +45,10 @@ export default function SignupForm() {
       // Check if response is ok before parsing JSON
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: 'Network error or server not responding' }));
-        throw new Error(errorData.message || `Server error: ${response.status}`);
+        const errorMessage = errorData.message || `Server error: ${response.status}`;
+        showToast(errorMessage, 'error');
+        setError(errorMessage);
+        return; // Stop execution here
       }
 
       const data = await response.json();
@@ -55,7 +58,6 @@ export default function SignupForm() {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
       }
-
       showToast('Signup successful! Redirecting to login...', 'success');
 
       // Redirect to login page after a short delay
@@ -64,11 +66,14 @@ export default function SignupForm() {
       }, 1000);
     } catch (err) {
       // More specific error messages
+      let errorMessage = 'An error occurred during signup';
       if (err.name === 'TypeError' && err.message.includes('fetch')) {
-        setError('Cannot connect to server. Please make sure the backend server is running on port 5000.');
+        errorMessage = 'Cannot connect to server. Please make sure the backend server is running on port 5000.';
       } else {
-        setError(err.message || 'An error occurred during signup');
+        errorMessage = err.message || errorMessage;
       }
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
       console.error('Signup error:', err);
     } finally {
       setLoading(false);

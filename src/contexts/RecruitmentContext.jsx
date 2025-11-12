@@ -1,149 +1,340 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { jobOpeningAPI, jobApplicantAPI, jobOfferAPI } from '../lib/api';
 
 const RecruitmentContext = createContext();
 
+const formatDate = (value) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toISOString().split('T')[0];
+};
+
 export function RecruitmentProvider({ children }) {
-  const [jobOpenings, setJobOpenings] = useState([
-    { id: 'JO001', title: 'Senior Software Engineer', department: 'Engineering', status: 'Active', applicants: 24, postedDate: '2024-01-15' },
-    { id: 'JO002', title: 'Product Manager', department: 'Product', status: 'Active', applicants: 18, postedDate: '2024-01-20' },
-    { id: 'JO003', title: 'UX Designer', department: 'Design', status: 'Active', applicants: 32, postedDate: '2024-01-25' },
-    { id: 'JO004', title: 'Marketing Manager', department: 'Marketing', status: 'Closed', applicants: 15, postedDate: '2024-01-10' },
-    { id: 'JO005', title: 'HR Business Partner', department: 'HR', status: 'Active', applicants: 12, postedDate: '2024-02-01' },
-    { id: 'JO006', title: 'Frontend Developer', department: 'Engineering', status: 'Active', applicants: 28, postedDate: '2024-02-05' },
-    { id: 'JO007', title: 'Data Analyst', department: 'Analytics', status: 'Active', applicants: 21, postedDate: '2024-02-10' },
-    { id: 'JO008', title: 'Sales Executive', department: 'Sales', status: 'Active', applicants: 19, postedDate: '2024-02-12' },
-  ]);
+  const [jobOpenings, setJobOpenings] = useState([]);
+  const [jobApplicants, setJobApplicants] = useState([]);
+  const [jobOffers, setJobOffers] = useState([]);
+  const [loading, setLoading] = useState({
+    jobOpenings: false,
+    jobApplicants: false,
+    jobOffers: false,
+  });
+  const [error, setError] = useState({
+    jobOpenings: null,
+    jobApplicants: null,
+    jobOffers: null,
+  });
 
-  const [jobApplicants, setJobApplicants] = useState([
-    { id: 'APP001', name: 'John Smith', email: 'john.smith@example.com', phone: '+1234567890', position: 'Software Engineer', status: 'Applied', date: '2024-02-15', resume: '✓' },
-    { id: 'APP002', name: 'Sarah Johnson', email: 'sarah.j@example.com', phone: '+1234567891', position: 'Product Manager', status: 'Screening', date: '2024-02-16', resume: '✓' },
-    { id: 'APP003', name: 'Michael Brown', email: 'm.brown@example.com', phone: '+1234567892', position: 'UX Designer', status: 'Interview', date: '2024-02-17', resume: '✓' },
-    { id: 'APP004', name: 'Emily Davis', email: 'emily.davis@example.com', phone: '+1234567893', position: 'Marketing Manager', status: 'Hired', date: '2024-02-10', resume: '✓' },
-    { id: 'APP005', name: 'David Wilson', email: 'd.wilson@example.com', phone: '+1234567894', position: 'HR Business Partner', status: 'Rejected', date: '2024-02-18', resume: '✓' },
-    { id: 'APP006', name: 'Lisa Anderson', email: 'lisa.a@example.com', phone: '+1234567895', position: 'Frontend Developer', status: 'Applied', date: '2024-02-19', resume: '✓' },
-    { id: 'APP007', name: 'Robert Taylor', email: 'r.taylor@example.com', phone: '+1234567896', position: 'Data Analyst', status: 'Screening', date: '2024-02-20', resume: '✓' },
-    { id: 'APP008', name: 'Jennifer Martinez', email: 'j.martinez@example.com', phone: '+1234567897', position: 'Sales Executive', status: 'Interview', date: '2024-02-21', resume: '✓' },
-  ]);
-
-  const [jobOffers, setJobOffers] = useState([
-    { id: 'OF001', candidate: 'John Smith', position: 'Senior Software Engineer', department: 'Engineering', offerDate: '2024-02-20', status: 'Accepted', salary: '$120,000', startDate: '2024-03-15' },
-    { id: 'OF002', candidate: 'Sarah Johnson', position: 'Product Manager', department: 'Product', offerDate: '2024-02-22', status: 'Pending', salary: '$130,000', startDate: '2024-03-20' },
-    { id: 'OF003', candidate: 'Michael Brown', position: 'UX Designer', department: 'Design', offerDate: '2024-02-24', status: 'Accepted', salary: '$110,000', startDate: '2024-03-25' },
-    { id: 'OF004', candidate: 'Emily Davis', position: 'Marketing Manager', department: 'Marketing', offerDate: '2024-02-18', status: 'Rejected', salary: '$105,000', startDate: '-' },
-    { id: 'OF005', candidate: 'David Wilson', position: 'HR Business Partner', department: 'HR', offerDate: '2024-02-26', status: 'Pending', salary: '$95,000', startDate: '2024-04-01' },
-    { id: 'OF006', candidate: 'Lisa Anderson', position: 'Frontend Developer', department: 'Engineering', offerDate: '2024-02-28', status: 'Accepted', salary: '$115,000', startDate: '2024-03-30' },
-    { id: 'OF007', candidate: 'Robert Taylor', position: 'Data Analyst', department: 'Analytics', offerDate: '2024-03-01', status: 'Pending', salary: '$90,000', startDate: '2024-04-05' },
-    { id: 'OF008', candidate: 'Jennifer Martinez', position: 'Sales Executive', department: 'Sales', offerDate: '2024-03-02', status: 'Accepted', salary: '$100,000', startDate: '2024-04-10' },
-  ]);
-
-  const addJobOpening = (job) => {
-    const newId = `JO${String(jobOpenings.length + 1).padStart(3, '0')}`;
-    const newJob = {
-      id: newId,
-      title: job.title,
+  const transformJobOpening = useCallback(
+    (job) => ({
+      id: job._id?.toString() || job.id,
+      sequence: job.sequence ?? null,
+      displayId:
+        job.sequence !== undefined && job.sequence !== null
+          ? job.sequence.toString()
+          : job.reference || job.id,
+      title: job.title || '',
       department: job.department || '',
+      description: job.description || '',
+      location: job.location || '',
+      employmentType: job.employmentType || '',
+      experience: job.experience || '',
+      salary: job.salary || '',
       status: job.status || 'Active',
-      applicants: 0,
-      postedDate: new Date().toISOString().split('T')[0]
-    };
-    setJobOpenings([...jobOpenings, newJob]);
-  };
+      applicants: job.applicantsCount ?? job.applicants ?? 0,
+      applicantsCount: job.applicantsCount ?? job.applicants ?? 0,
+      postedDate: formatDate(job.postedDate) || formatDate(job.createdAt) || '',
+      createdAt: job.createdAt,
+      updatedAt: job.updatedAt,
+    }),
+    []
+  );
 
-  const addJobApplicant = (applicant) => {
-    const newId = `APP${String(jobApplicants.length + 1).padStart(3, '0')}`;
-    const newApplicant = {
-      id: newId,
-      name: applicant.name,
-      email: applicant.email,
-      phone: applicant.phone,
-      position: applicant.position,
+  const transformJobApplicant = useCallback(
+    (applicant) => ({
+      id: applicant._id?.toString() || applicant.id,
+      sequence: applicant.sequence ?? null,
+      displayId:
+        applicant.sequence !== undefined && applicant.sequence !== null
+          ? applicant.sequence.toString()
+          : applicant.reference || applicant.id,
+      name: applicant.name || '',
+      email: applicant.email || '',
+      phone: applicant.phone || '',
+      position: applicant.position || '',
+      resume: applicant.resume || '',
+      coverLetter: applicant.coverLetter || '',
       status: applicant.status || 'Applied',
-      date: new Date().toISOString().split('T')[0],
-      resume: '✓'
-    };
-    setJobApplicants([...jobApplicants, newApplicant]);
-  };
+      date: formatDate(applicant.appliedDate) || formatDate(applicant.createdAt) || '',
+      appliedDate: applicant.appliedDate,
+      jobOpening: applicant.jobOpening || null,
+      createdAt: applicant.createdAt,
+      updatedAt: applicant.updatedAt,
+    }),
+    []
+  );
 
-  const addJobOffer = (offer) => {
-    const newId = `OF${String(jobOffers.length + 1).padStart(3, '0')}`;
-    const newOffer = {
-      id: newId,
-      candidate: offer.candidate,
-      position: offer.position,
-      department: offer.department,
-      offerDate: offer.offerDate || new Date().toISOString().split('T')[0],
+  const transformJobOffer = useCallback(
+    (offer) => ({
+      id: offer._id?.toString() || offer.id,
+      sequence: offer.sequence ?? null,
+      displayId:
+        offer.sequence !== undefined && offer.sequence !== null
+          ? offer.sequence.toString()
+          : offer.reference || offer.id,
+      candidate: offer.candidate || '',
+      position: offer.position || '',
+      department: offer.department || '',
+      salary: offer.salary || '',
+      startDate: formatDate(offer.startDate),
+      offerDate: formatDate(offer.offerDate) || formatDate(offer.createdAt) || '',
       status: offer.status || 'Pending',
-      salary: offer.salary,
-      startDate: offer.startDate || '-'
-    };
-    setJobOffers([...jobOffers, newOffer]);
-  };
+      notes: offer.notes || '',
+      jobApplicant: offer.jobApplicant || null,
+      createdAt: offer.createdAt,
+      updatedAt: offer.updatedAt,
+    }),
+    []
+  );
 
-  // Delete functions
-  const deleteJobOpening = (id) => {
-    setJobOpenings(jobOpenings.filter(job => job.id !== id));
-  };
+  const setLoadingState = useCallback((key, value) => {
+    setLoading((prev) => ({ ...prev, [key]: value }));
+  }, []);
 
-  const deleteJobApplicant = (id) => {
-    setJobApplicants(jobApplicants.filter(applicant => applicant.id !== id));
-  };
+  const setErrorState = useCallback((key, message) => {
+    setError((prev) => ({ ...prev, [key]: message }));
+  }, []);
 
-  const deleteJobOffer = (id) => {
-    setJobOffers(jobOffers.filter(offer => offer.id !== id));
-  };
+  const fetchJobOpenings = useCallback(
+    async (params = {}) => {
+      try {
+        setLoadingState('jobOpenings', true);
+        setErrorState('jobOpenings', null);
+        const response = await jobOpeningAPI.getAll(params);
+        if (response.success) {
+          setJobOpenings(response.data.map(transformJobOpening));
+        }
+      } catch (err) {
+        console.error('Error fetching job openings:', err);
+        setErrorState('jobOpenings', err.message || 'Failed to load job openings.');
+      } finally {
+        setLoadingState('jobOpenings', false);
+      }
+    },
+    [setLoadingState, setErrorState, transformJobOpening]
+  );
 
-  // Update functions
-  const updateJobOpening = (id, updatedData) => {
-    setJobOpenings(jobOpenings.map(job => 
-      job.id === id ? { ...job, ...updatedData } : job
-    ));
-  };
+  const fetchJobApplicants = useCallback(
+    async (params = {}) => {
+      try {
+        setLoadingState('jobApplicants', true);
+        setErrorState('jobApplicants', null);
+        const response = await jobApplicantAPI.getAll(params);
+        if (response.success) {
+          setJobApplicants(response.data.map(transformJobApplicant));
+        }
+      } catch (err) {
+        console.error('Error fetching job applicants:', err);
+        setErrorState('jobApplicants', err.message || 'Failed to load job applicants.');
+      } finally {
+        setLoadingState('jobApplicants', false);
+      }
+    },
+    [setLoadingState, setErrorState, transformJobApplicant]
+  );
 
-  const updateJobApplicant = (id, updatedData) => {
-    setJobApplicants(jobApplicants.map(applicant => 
-      applicant.id === id ? { ...applicant, ...updatedData } : applicant
-    ));
-  };
+  const fetchJobOffers = useCallback(
+    async (params = {}) => {
+      try {
+        setLoadingState('jobOffers', true);
+        setErrorState('jobOffers', null);
+        const response = await jobOfferAPI.getAll(params);
+        if (response.success) {
+          setJobOffers(response.data.map(transformJobOffer));
+        }
+      } catch (err) {
+        console.error('Error fetching job offers:', err);
+        setErrorState('jobOffers', err.message || 'Failed to load job offers.');
+      } finally {
+        setLoadingState('jobOffers', false);
+      }
+    },
+    [setLoadingState, setErrorState, transformJobOffer]
+  );
 
-  const updateJobOffer = (id, updatedData) => {
-    setJobOffers(jobOffers.map(offer => 
-      offer.id === id ? { ...offer, ...updatedData } : offer
-    ));
-  };
+  useEffect(() => {
+    fetchJobOpenings();
+    fetchJobApplicants();
+    fetchJobOffers();
+  }, [fetchJobOpenings, fetchJobApplicants, fetchJobOffers]);
 
-  // Get single item functions
-  const getJobOpeningById = (id) => {
-    return jobOpenings.find(job => job.id === id);
-  };
+  const addJobOpening = useCallback(
+    async (data) => {
+      try {
+        const response = await jobOpeningAPI.create(data);
+        if (response.success) {
+          const transformed = transformJobOpening(response.data);
+          setJobOpenings((prev) => [transformed, ...prev]);
+          return transformed;
+        }
+        throw new Error(response.message || 'Failed to create job opening.');
+      } catch (error) {
+        console.error('Error creating job opening:', error);
+        throw error;
+      }
+    },
+    [transformJobOpening]
+  );
 
-  const getJobApplicantById = (id) => {
-    return jobApplicants.find(applicant => applicant.id === id);
-  };
+  const updateJobOpening = useCallback(
+    async (id, data) => {
+      try {
+        const response = await jobOpeningAPI.update(id, data);
+        if (response.success) {
+          const transformed = transformJobOpening(response.data);
+          setJobOpenings((prev) => prev.map((job) => (job.id === transformed.id ? transformed : job)));
+          return transformed;
+        }
+        throw new Error(response.message || 'Failed to update job opening.');
+      } catch (error) {
+        console.error('Error updating job opening:', error);
+        throw error;
+      }
+    },
+    [transformJobOpening]
+  );
 
-  const getJobOfferById = (id) => {
-    return jobOffers.find(offer => offer.id === id);
-  };
+  const deleteJobOpening = useCallback(async (id) => {
+    try {
+      await jobOpeningAPI.delete(id);
+      setJobOpenings((prev) => prev.filter((job) => job.id !== id));
+    } catch (error) {
+      console.error('Error deleting job opening:', error);
+      throw error;
+    }
+  }, []);
+
+  const addJobApplicant = useCallback(
+    async (data) => {
+      try {
+        const response = await jobApplicantAPI.create(data);
+        if (response.success) {
+          const transformed = transformJobApplicant(response.data);
+          setJobApplicants((prev) => [transformed, ...prev]);
+          return transformed;
+        }
+        throw new Error(response.message || 'Failed to add job applicant.');
+      } catch (error) {
+        console.error('Error creating job applicant:', error);
+        throw error;
+      }
+    },
+    [transformJobApplicant]
+  );
+
+  const updateJobApplicant = useCallback(
+    async (id, data) => {
+      try {
+        const response = await jobApplicantAPI.update(id, data);
+        if (response.success) {
+          const transformed = transformJobApplicant(response.data);
+          setJobApplicants((prev) => prev.map((applicant) => (applicant.id === transformed.id ? transformed : applicant)));
+          return transformed;
+        }
+        throw new Error(response.message || 'Failed to update job applicant.');
+      } catch (error) {
+        console.error('Error updating job applicant:', error);
+        throw error;
+      }
+    },
+    [transformJobApplicant]
+  );
+
+  const deleteJobApplicant = useCallback(async (id) => {
+    try {
+      await jobApplicantAPI.delete(id);
+      setJobApplicants((prev) => prev.filter((applicant) => applicant.id !== id));
+    } catch (error) {
+      console.error('Error deleting job applicant:', error);
+      throw error;
+    }
+  }, []);
+
+  const addJobOffer = useCallback(
+    async (data) => {
+      try {
+        const response = await jobOfferAPI.create(data);
+        if (response.success) {
+          const transformed = transformJobOffer(response.data);
+          setJobOffers((prev) => [transformed, ...prev]);
+          return transformed;
+        }
+        throw new Error(response.message || 'Failed to create job offer.');
+      } catch (error) {
+        console.error('Error creating job offer:', error);
+        throw error;
+      }
+    },
+    [transformJobOffer]
+  );
+
+  const updateJobOffer = useCallback(
+    async (id, data) => {
+      try {
+        const response = await jobOfferAPI.update(id, data);
+        if (response.success) {
+          const transformed = transformJobOffer(response.data);
+          setJobOffers((prev) => prev.map((offer) => (offer.id === transformed.id ? transformed : offer)));
+          return transformed;
+        }
+        throw new Error(response.message || 'Failed to update job offer.');
+      } catch (error) {
+        console.error('Error updating job offer:', error);
+        throw error;
+      }
+    },
+    [transformJobOffer]
+  );
+
+  const deleteJobOffer = useCallback(async (id) => {
+    try {
+      await jobOfferAPI.delete(id);
+      setJobOffers((prev) => prev.filter((offer) => offer.id !== id));
+    } catch (error) {
+      console.error('Error deleting job offer:', error);
+      throw error;
+    }
+  }, []);
+
+  const getJobOpeningById = useCallback((id) => jobOpenings.find((job) => job.id === id), [jobOpenings]);
+  const getJobApplicantById = useCallback((id) => jobApplicants.find((applicant) => applicant.id === id), [jobApplicants]);
+  const getJobOfferById = useCallback((id) => jobOffers.find((offer) => offer.id === id), [jobOffers]);
 
   return (
     <RecruitmentContext.Provider
       value={{
         jobOpenings,
-        addJobOpening,
-        deleteJobOpening,
-        updateJobOpening,
-        getJobOpeningById,
         jobApplicants,
-        addJobApplicant,
-        deleteJobApplicant,
-        updateJobApplicant,
-        getJobApplicantById,
         jobOffers,
+        loading,
+        error,
+        fetchJobOpenings,
+        fetchJobApplicants,
+        fetchJobOffers,
+        addJobOpening,
+        updateJobOpening,
+        deleteJobOpening,
+        getJobOpeningById,
+        addJobApplicant,
+        updateJobApplicant,
+        deleteJobApplicant,
+        getJobApplicantById,
         addJobOffer,
-        deleteJobOffer,
         updateJobOffer,
-        getJobOfferById
+        deleteJobOffer,
+        getJobOfferById,
       }}
     >
       {children}
